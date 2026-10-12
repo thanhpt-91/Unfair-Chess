@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Play Stockfish with a superpower: sniper bishops, amazon queen, nightrider knights, leaping rooks or berserker pawns.">
+<meta name="description" content="Play Stockfish 19 with a superpower: sniper bishops, amazon queen, nightrider knights, leaping rooks or berserker pawns.">
 <title>Unfair Chess</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -63,6 +63,8 @@ button { font: inherit; color: inherit; }
 }
 .who { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .who .name { font-weight: 600; white-space: nowrap; }
+.elo { font-family: var(--f-mono); font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--ink); color: var(--panel); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.elo.max { background: var(--accent); color: #fff; }
 .who .tag { font-family: var(--f-mono); font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .power-chip {
   display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 4px; border-radius: 999px;
@@ -75,6 +77,7 @@ button { font: inherit; color: inherit; }
 .dot-live { width: 8px; height: 8px; border-radius: 50%; background: var(--line); flex: none; }
 .dot-live.on { background: var(--good); box-shadow: 0 0 0 4px color-mix(in srgb, var(--good) 22%, transparent); }
 
+.board-wrap { --bw: min(100%, 640px, calc(100dvh - 150px)); width: var(--bw); }
 .table { --bw: min(100%, 640px, max(300px, calc(100dvh - 150px))); }
 .board-wrap { width: var(--bw); max-width: 100%; aspect-ratio: 1; position: relative; border-radius: 4px; overflow: hidden; box-shadow: var(--shadow); touch-action: none; user-select: none; -webkit-user-select: none; }
 .squares { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); }
@@ -137,7 +140,7 @@ button { font: inherit; color: inherit; }
 .power b { display: block; font-weight: 600; font-size: 14px; }
 .power small { display: block; color: var(--muted); font-size: 12.5px; line-height: 1.35; }
 .seg { display: grid; grid-template-columns: repeat(var(--n), 1fr); border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
-.seg button { border: 0; background: transparent; padding: 8px 4px; cursor: pointer; font-size: 13px; font-weight: 500; border-left: 1px solid var(--line); }
+.seg button { font-variant-numeric: tabular-nums; border: 0; background: transparent; padding: 8px 4px; cursor: pointer; font-size: 13px; font-weight: 500; border-left: 1px solid var(--line); }
 .seg button:first-child { border-left: 0; }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -184,15 +187,14 @@ button { font: inherit; color: inherit; }
       <div class="powers" id="powers"></div>
     </div>
 
-    <div class="row2">
-      <div>
-        <div class="label">Play as</div>
-        <div class="seg" id="colorSeg" style="--n:2"></div>
-      </div>
-      <div>
-        <div class="label">Stockfish</div>
-        <div class="seg" id="levelSeg" style="--n:4"></div>
-      </div>
+    <div>
+      <div class="label">Stockfish strength <em>Elo</em></div>
+      <div class="seg" id="levelSeg" style="--n:6"></div>
+    </div>
+
+    <div>
+      <div class="label">Play as</div>
+      <div class="seg" id="colorSeg" style="--n:2"></div>
     </div>
 
     <div class="actions">
@@ -442,15 +444,18 @@ const POWERS = [
   { id: 'berserker', name: 'Berserker Pawns', icon: 'P', rule: 'Pawns can also capture straight ahead.' },
 ];
 const LEVELS = [
-  { name: 'Easy', skill: 0, ms: 120, depth: 1 },
-  { name: 'Club', skill: 6, ms: 300 },
-  { name: 'Hard', skill: 13, ms: 700 },
-  { name: 'Max', skill: 20, ms: 1500 },
+  { name: '1400', elo: 1400, ms: 600 },
+  { name: '1800', elo: 1800, ms: 800 },
+  { name: '2200', elo: 2200, ms: 1000 },
+  { name: '2600', elo: 2600, ms: 1200 },
+  { name: '3000', elo: 3000, ms: 1500 },
+  { name: 'Max', elo: null, ms: 2500 },
 ];
+const eloLabel = L => L.elo ? L.elo + ' Elo' : 'Full strength · ~3600';
 
 const G = {
-  human: 'w', ability: 'sniper', level: 1,
-  next: { human: 'w', ability: 'sniper', level: 1 },
+  human: 'w', ability: 'sniper', level: 2,
+  next: { human: 'w', ability: 'sniper', level: 2 },
   s: null, hist: [], log: [], keys: {}, over: null, last: null,
   selected: -1, legal: [], thinking: false,
 };
@@ -462,33 +467,54 @@ function currentLegal(s) {
 const oppAbFor = c => c === G.human ? null : G.ability; // abilities that attack color c
 
 // ===== Engine =====
+// Stockfish 19 (WebAssembly, single-threaded). The small "lite" net loads first so play can start
+// right away; the full-strength net (~99 MB, cached after the first visit) loads in the background
+// and takes over between moves once it is ready.
+const ENGINES = {
+  lite: { file: 'stockfish-19-lite-single.js', label: 'Stockfish 19 Lite' },
+  full: { file: 'stockfish-19-single.js', label: 'Stockfish 19' },
+};
 const Engine = {
-  w: null, ready: false, failed: false, busy: false, req: null, queued: null,
-  start() {
-    const tryWorker = (make, label) => new Promise(res => {
+  w: null, net: null, ready: false, failed: false, busy: false, req: null, queued: null,
+  spare: null, fullPct: null, fullFailed: false,
+  load(kind, onProgress) {
+    return new Promise(res => {
       let w;
-      try { w = make(); } catch (e) { return res(null); }
-      const t = setTimeout(() => { w.terminate(); res(null); }, 9000);
+      try { w = new Worker(ENGINES[kind].file); } catch (e) { return res(null); }
+      const t = setTimeout(() => { try { w.terminate(); } catch (e) {} res(null); }, kind === 'full' ? 600000 : 30000);
       w.onmessage = e => {
-        const line = typeof e.data === 'string' ? e.data : '';
-        if (line === 'uciok') w.postMessage('isready');
-        if (line === 'readyok') { clearTimeout(t); res(w); }
+        const d = e.data;
+        if (d && typeof d === 'object' && typeof d.percent === 'number') { onProgress && onProgress(d.percent); return; }
+        if (d === 'uciok') { w.postMessage('setoption name Hash value ' + (kind === 'full' ? 64 : 32)); w.postMessage('isready'); }
+        if (d === 'readyok') { clearTimeout(t); res(w); }
       };
       w.onerror = () => { clearTimeout(t); try { w.terminate(); } catch (e) {} res(null); };
       w.postMessage('uci');
     });
+  },
+  attach(w, kind) {
+    if (this.w) try { this.w.terminate(); } catch (e) {}
+    this.w = w; this.net = kind; this.ready = true;
+    w.onmessage = e => { if (typeof e.data === 'string') this.onLine(e.data); };
+    w.onerror = null;
+    setEngineNote(); renderStrips();
+    if (this.queued && !this.busy) { const q = this.queued; this.queued = null; this.go(q); }
+  },
+  start() {
     (async () => {
-      let w = await tryWorker(() => new Worker('stockfish.js'), 'local');
-      if (!w) w = await tryWorker(() => new Worker(URL.createObjectURL(new Blob(
-        ["importScripts('https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js');"], { type: 'application/javascript' }))), 'cdn');
-      if (!w) { this.failed = true; setEngineNote(); if (this.queued) { const q = this.queued; this.queued = null; this.go(q); } return; }
-      this.w = w; this.ready = true;
-      w.onmessage = e => this.onLine(typeof e.data === 'string' ? e.data : '');
+      const lite = await this.load('lite');
+      if (lite) this.attach(lite, 'lite');
+      const full = await this.load('full', p => { this.fullPct = p; setEngineNote(); });
+      if (full) { if (this.busy) this.spare = full; else this.attach(full, 'full'); }
+      else this.fullFailed = true;
+      if (!this.ready) {
+        this.failed = true;
+        if (this.queued) { const q = this.queued; this.queued = null; this.go(q); }
+      }
       setEngineNote();
-      if (this.queued) { const q = this.queued; this.queued = null; this.go(q); }
     })();
   },
-  // r = { s, legal, level, token, cb }
+  // r = { s, legal, level, cb }
   go(r) {
     if (!this.ready) {
       if (this.failed) return setTimeout(() => r.cb(fallbackPick(r.s, r.legal, r.level)), 250);
@@ -497,17 +523,22 @@ const Engine = {
     if (this.busy) { this.queued = r; this.w.postMessage('stop'); return; }
     this.busy = true; this.req = r;
     const L = LEVELS[r.level];
-    this.w.postMessage('setoption name Skill Level value ' + L.skill);
+    if (L.elo) {
+      this.w.postMessage('setoption name UCI_LimitStrength value true');
+      this.w.postMessage('setoption name UCI_Elo value ' + L.elo);
+    } else this.w.postMessage('setoption name UCI_LimitStrength value false');
     this.w.postMessage('position fen ' + toFEN(r.s));
     const sm = [...new Set(r.legal.map(uciOf))].join(' ');
-    this.w.postMessage('go ' + (L.depth ? 'depth ' + L.depth + ' ' : '') + 'movetime ' + L.ms + ' searchmoves ' + sm);
+    this.w.postMessage('go movetime ' + L.ms + ' searchmoves ' + sm);
   },
   cancel() { if (this.busy) this.w.postMessage('stop'); if (this.req) this.req.dead = true; this.queued = null; },
   onLine(line) {
     if (!line.startsWith('bestmove')) return;
     const r = this.req; this.busy = false; this.req = null;
-    if (r && !r.dead) r.cb(r.legal.find(m => uciOf(m) === line.split(' ')[1]) || r.legal.find(m => uciOf(m) + 'q' === line.split(' ')[1]) || r.legal[Math.floor(Math.random() * r.legal.length)]);
-    if (this.queued) { const q = this.queued; this.queued = null; this.go(q); }
+    const uci = line.split(' ')[1];
+    if (this.spare) { const s = this.spare; this.spare = null; this.attach(s, 'full'); }
+    if (r && !r.dead) r.cb(r.legal.find(m => uciOf(m) === uci) || r.legal.find(m => uciOf(m) + 'q' === uci) || r.legal[Math.floor(Math.random() * r.legal.length)]);
+    if (this.queued && !this.busy) { const q = this.queued; this.queued = null; this.go(q); }
   },
 };
 // Backup opponent if Stockfish can't load: shallow material search
@@ -684,7 +715,7 @@ function stripHTML(c) {
   const left = isHuman
     ? `<div class="who"><span class="dot-live ${G.s.turn === c && !G.over ? 'on' : ''}"></span><span class="name">You</span>
        <span class="power-chip"><img src="${PIECES[c === 'w' ? pw.icon : pw.icon.toLowerCase()]}" alt="">${pw.name}</span></div>`
-    : `<div class="who"><span class="dot-live ${thinking ? 'on' : ''}"></span><span class="name">Stockfish</span><span class="tag">${LEVELS[G.level].name} · normal rules</span></div>`;
+    : `<div class="who"><span class="dot-live ${thinking ? 'on' : ''}"></span><span class="name">Stockfish</span><span class="elo${LEVELS[G.level].elo ? '' : ' max'}">${eloLabel(LEVELS[G.level])}</span><span class="tag">${Engine.net === 'lite' ? 'lite net · ' : ''}normal rules</span></div>`;
   return left + `<div class="caps">${caps}${mat > 0 ? `<span class="diff">+${Math.round(mat / 100)}</span>` : ''}</div>`;
 }
 function renderStrips() {
@@ -759,9 +790,13 @@ function renderResult() {
 }
 
 function setEngineNote() {
-  $('engineNote').textContent = Engine.ready
-    ? 'Stockfish 10 running in your browser. It only knows normal chess, so it never sees your power coming.'
-    : Engine.failed ? 'Stockfish could not load here, so a simple built-in bot is playing instead.' : 'Loading Stockfish…';
+  const el = $('engineNote');
+  if (Engine.failed) { el.textContent = 'Stockfish could not load here, so a simple built-in bot is playing instead.'; return; }
+  if (!Engine.ready) { el.textContent = 'Loading Stockfish 19…'; return; }
+  const base = 'Stockfish 19 runs in your browser and only knows normal chess, so it never sees your power coming. ';
+  if (Engine.net === 'full') el.textContent = base + 'Full-strength net loaded.';
+  else if (Engine.fullFailed) el.textContent = base + 'Using the lite net (the full net is not available here).';
+  else el.textContent = base + 'Using the lite net while the full net downloads' + (Engine.fullPct != null ? ' (' + Math.round(Engine.fullPct * 100) + '%)' : '') + '. It switches over between moves.';
 }
 
 // ===== Input =====
