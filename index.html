@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Play Stockfish 19 with a superpower: sniper bishops, amazon queen, nightrider knights, leaping rooks or berserker pawns.">
+<meta name="description" content="Play Stockfish 19 with a superpower: sniper bishops, amazon queen, nightrider knights, leaping rooks, berserker pawns or Game of Life pawns.">
 <title>Unfair Chess</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -120,6 +120,8 @@ button { font: inherit; color: inherit; }
 .pc.anim { transition: transform .18s cubic-bezier(.3,.7,.3,1); }
 .pc.drag { z-index: 10; filter: drop-shadow(0 6px 8px rgba(0,0,0,.35)); transition: none; }
 .pc.ghost { animation: hit .55s ease-out forwards; }
+.pc.born { animation: born .5s .2s both cubic-bezier(.3,1.5,.5,1); }
+@keyframes born { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes hit { 0% { opacity: 1; transform: scale(1); filter: brightness(1.6); } 100% { opacity: 0; transform: scale(.4) rotate(18deg); } }
 .fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
 .fx line { stroke: var(--accent); stroke-width: .06; stroke-linecap: round; animation: tracer .5s ease-out forwards; }
@@ -173,9 +175,10 @@ button { font: inherit; color: inherit; }
   display: grid; grid-template-columns: 3ch 1fr 1fr; column-gap: 10px; row-gap: 2px; font-variant-numeric: tabular-nums; }
 .moves .n { color: var(--muted); }
 .moves .shot { color: var(--accent); font-weight: 600; }
+.moves .life { color: var(--accent); font-size: 11px; margin-left: 4px; }
 .moves .empty { grid-column: 1 / -1; color: var(--muted); font-family: var(--f-body); }
 .engine-note { font-size: 12px; color: var(--muted); }
-@media (prefers-reduced-motion: reduce) { .pc.anim { transition: none; } .fx line, .fx circle, .pc.ghost { animation-duration: .01s; } }
+@media (prefers-reduced-motion: reduce) { .pc.anim { transition: none; } .fx line, .fx circle, .pc.ghost, .pc.born { animation-duration: .01s; animation-delay: 0s; } }
 </style>
 <style>body{margin:0}[hidden]{display:none!important}</style>
 </head>
@@ -420,10 +423,49 @@ function makeMove(s, m) {
 const kingSq = (b, c) => b.indexOf(c === 'w' ? 'K' : 'k');
 function inCheck(s, c, oppAb) { return !!attackMap(s.b, other(c), oppAb)[kingSq(s.b, c)]; }
 
+// Game of Life Pawns: one generation over every pawn on the board (pieces are obstacles, not cells).
+// A pawn with 2 or 3 pawn neighbours survives; an empty square with exactly 3 gets a pawn of the
+// majority colour. No births on the back ranks, and no side may exceed 8 pawns or 16 pieces.
+function lifeStep(b) {
+  const nb = b.slice(), born = [], died = [];
+  for (let i = 0; i < 64; i++) {
+    const f = i & 7, r = i >> 3;
+    let w = 0, k = 0;
+    for (let df = -1; df <= 1; df++) for (let dr = -1; dr <= 1; dr++) {
+      if ((!df && !dr) || !onB(f + df, r + dr)) continue;
+      const q = b[idx(f + df, r + dr)];
+      if (q === 'P') w++; else if (q === 'p') k++;
+    }
+    const n = w + k, p = b[i];
+    if (p === 'P' || p === 'p') { if (n !== 2 && n !== 3) { nb[i] = null; died.push({ sq: i, p }); } }
+    else if (!p && n === 3 && r !== 0 && r !== 7) born.push({ sq: i, p: w > k ? 'P' : 'p' });
+  }
+  const kept = [];
+  born.sort((a, b) => Math.abs((a.sq & 7) - 3.5) - Math.abs((b.sq & 7) - 3.5) || a.sq - b.sq); // centre files first when capped
+  for (const c of ['P', 'p']) {
+    const pawns = nb.filter(x => x === c).length;
+    const pieces = nb.filter(x => x && colorOf(x) === colorOf(c)).length;
+    let room = Math.min(8 - pawns, 16 - pieces);
+    for (const x of born) if (x.p === c && room > 0) { nb[x.sq] = c; kept.push(x); room--; }
+  }
+  return { b: nb, born: kept, died };
+}
+
+// Apply a move, then the mover's after-move power (only Life has one)
+function applyMove(s, m, ab) {
+  const n = makeMove(s, m);
+  if (ab !== 'life') return n;
+  const L = lifeStep(n.b);
+  n.b = L.b; n.life = { born: L.born, died: L.died };
+  if (L.born.length || L.died.length) n.half = 0;
+  if (n.ep >= 0 && (n.b[m.to] !== m.piece || n.b[n.ep])) n.ep = -1;
+  return n;
+}
+
 function legalMoves(s, ab, oppAb) {
   const c = s.turn;
   return pseudoMoves(s, c, ab, oppAb).filter(m => {
-    const n = makeMove(s, m);
+    const n = applyMove(s, m, ab);
     return !attackMap(n.b, other(c), oppAb)[kingSq(n.b, c)];
   });
 }
@@ -468,6 +510,7 @@ const POWERS = [
   { id: 'nightrider', name: 'Nightrider Knights', icon: 'N', rule: 'Knights keep jumping in the same direction until something blocks them.' },
   { id: 'leaping', name: 'Leaping Rooks', icon: 'R', rule: 'Rooks can hop over one piece in their path.' },
   { id: 'berserker', name: 'Berserker Pawns', icon: 'P', rule: 'Pawns can also capture straight ahead.' },
+  { id: 'life', name: 'Game of Life Pawns', icon: 'p', rule: 'After each of your moves, all pawns follow Conway\'s Life: 2–3 pawn neighbours survive, exactly 3 spawn a new one.' },
 ];
 const LEVELS = [
   { name: '1400', elo: 1400, ms: 600 },
@@ -548,6 +591,8 @@ const Engine = {
     }
     if (this.busy) { this.queued = r; this.w.postMessage('stop'); return; }
     this.busy = true; this.req = r;
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => this.rescue(r), LEVELS[r.level].ms + 8000);
     const L = LEVELS[r.level];
     if (L.elo) {
       this.w.postMessage('setoption name UCI_LimitStrength value true');
@@ -557,6 +602,16 @@ const Engine = {
     const sm = [...new Set(r.legal.map(uciOf))].join(' ');
     this.w.postMessage('go movetime ' + L.ms + ' searchmoves ' + sm);
   },
+  // The engine went silent (e.g. a position it refuses): restart it and let the backup bot move.
+  rescue(r) {
+    if (this.req !== r) return;
+    const kind = this.net || 'lite';
+    this.busy = false; this.req = null; this.ready = false;
+    try { this.w.terminate(); } catch (e) {}
+    this.w = null;
+    this.load(kind).then(w => { if (w) this.attach(w, kind); else { this.failed = true; setEngineNote(); } });
+    if (!r.dead) r.cb(fallbackPick(r.s, r.legal, r.level));
+  },
   cancel() { if (this.busy) this.w.postMessage('stop'); if (this.req) this.req.dead = true; this.queued = null; },
   onLine(line) {
     if (line.startsWith('info') && this.req && !this.req.dead && line.includes(' score ') && !/bound/.test(line)) {
@@ -565,6 +620,7 @@ const Engine = {
       return;
     }
     if (!line.startsWith('bestmove')) return;
+    clearTimeout(this.timer);
     const r = this.req; this.busy = false; this.req = null;
     const uci = line.split(' ')[1];
     if (this.spare) { const s = this.spare; this.spare = null; this.attach(s, 'full'); }
@@ -581,7 +637,7 @@ function fallbackPick(s, legal, level) {
     const replies = legalMoves(n, G.ability, null);
     let worst = 1e9;
     if (!replies.length) worst = inCheck(n, n.turn, null) ? 1e6 : 0;
-    for (const rm of replies) worst = Math.min(worst, evalMat(makeMove(n, rm).b, me));
+    for (const rm of replies) worst = Math.min(worst, evalMat(applyMove(n, rm, G.ability).b, me));
     const v = worst + Math.random() * (level === 0 ? 300 : 30);
     if (v > bestV) { bestV = v; best = m; }
   }
@@ -602,11 +658,11 @@ function newGame(keepSettings) {
 
 function play(m) {
   const before = G.s, legalBefore = G.legal;
-  const after = makeMove(before, m);
+  const after = applyMove(before, m, before.turn === G.human ? G.ability : null);
   const afterLegal = currentLegal(after);
   const san = notate(before, m, legalBefore, after, afterLegal, oppAbFor(after.turn));
   G.hist.push({ s: before, last: G.last, keys: Object.assign({}, G.keys), ev: G.ev });
-  G.log.push({ san, shot: !!m.shot, color: before.turn });
+  G.log.push({ san, shot: !!m.shot, color: before.turn, life: after.life && (after.life.born.length || after.life.died.length) ? [after.life.born.length, after.life.died.length] : null });
   G.s = after; G.legal = afterLegal; G.last = m; G.selected = -1;
   const k = boardKey(after); G.keys[k] = (G.keys[k] || 0) + 1;
   if (!afterLegal.length) {
@@ -710,6 +766,16 @@ function animate(m) {
     if (!m.shot) g.style.animationDelay = '.12s';
     piecesEl.appendChild(g); setTimeout(() => g.remove(), 800);
   }
+  const L = G.s.life;
+  if (L) {
+    for (const d of L.died) {
+      const g = document.createElement('div'), { x, y } = posOf(d.sq);
+      g.className = 'pc ghost'; g.style.left = x * 12.5 + '%'; g.style.top = y * 12.5 + '%';
+      g.style.backgroundImage = `url("${PIECES[d.p]}")`; g.style.animationDelay = '.2s';
+      piecesEl.appendChild(g); setTimeout(() => g.remove(), 1000);
+    }
+    for (const n of L.born) piecesEl.querySelector(`.pc[data-sq="${n.sq}"]`)?.classList.add('born');
+  }
   if (m.shot) {
     const a = posOf(m.from), b = posOf(m.to);
     fxEl.innerHTML = `<line x1="${a.x + .5}" y1="${a.y + .5}" x2="${b.x + .5}" y2="${b.y + .5}"></line><circle cx="${b.x + .5}" cy="${b.y + .5}" r=".05"></circle>`;
@@ -774,7 +840,7 @@ function renderMoves() {
   if (startBlack) { html += `<span class="n">1.</span><span>…</span>`; }
   for (const e of G.log) {
     if (e.color === 'w') html += `<span class="n">${num}.</span>`;
-    html += `<span class="${e.shot ? 'shot' : ''}">${e.san}</span>`;
+    html += `<span class="${e.shot ? 'shot' : ''}">${e.san}${e.life ? `<span class="life" title="Life: ${e.life[0]} born, ${e.life[1]} died">+${e.life[0]} −${e.life[1]}</span>` : ''}</span>`;
     if (e.color === 'b') num++;
     i++;
   }

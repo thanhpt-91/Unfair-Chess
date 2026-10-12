@@ -1,7 +1,7 @@
 # Unfair Chess
 
 Play Stockfish 19 with a one-sided superpower: Sniper Bishops, Amazon Queen,
-Nightrider Knights, Leaping Rooks or Berserker Pawns.
+Nightrider Knights, Leaping Rooks, Berserker Pawns or Game of Life Pawns.
 
 Live: https://thanhpt-91.github.io/Unfair-Chess/
 
