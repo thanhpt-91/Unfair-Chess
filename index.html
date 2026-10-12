@@ -21,6 +21,8 @@
   --good: #2f7d4a;
   --sq-light: #f0d9b5;
   --sq-dark: #b58863;
+  --ev-white: #f2f0ec;
+  --ev-black: #3a3734;
   --hl-last: rgba(155, 199, 0, .42);
   --hl-sel: rgba(20, 85, 30, .5);
   --dot: rgba(20, 85, 30, .45);
@@ -77,9 +79,22 @@ button { font: inherit; color: inherit; }
 .dot-live { width: 8px; height: 8px; border-radius: 50%; background: var(--line); flex: none; }
 .dot-live.on { background: var(--good); box-shadow: 0 0 0 4px color-mix(in srgb, var(--good) 22%, transparent); }
 
-.board-wrap { --bw: min(100%, 640px, calc(100dvh - 150px)); width: var(--bw); }
 .table { --bw: min(100%, 640px, max(300px, calc(100dvh - 150px))); }
-.board-wrap { width: var(--bw); max-width: 100%; aspect-ratio: 1; position: relative; border-radius: 4px; overflow: hidden; box-shadow: var(--shadow); touch-action: none; user-select: none; -webkit-user-select: none; }
+.board-row { width: var(--bw); max-width: 100%; display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; }
+.board-row.no-eval { grid-template-columns: minmax(0, 1fr); }
+.evalbar { position: relative; border-radius: 4px; overflow: hidden; background: var(--ev-black); box-shadow: var(--shadow); }
+.evalbar .fill { position: absolute; left: 0; right: 0; bottom: 0; height: 50%; background: var(--ev-white); transition: height .45s cubic-bezier(.3,.7,.3,1); }
+.evalbar.flip .fill { bottom: auto; top: 0; }
+.evalbar .num { position: absolute; left: 0; right: 0; text-align: center; font-family: var(--f-mono); font-size: 9.5px; font-weight: 600; letter-spacing: -.03em; line-height: 1; z-index: 1; }
+.evalbar .num.at-bottom { bottom: 5px; } .evalbar .num.at-top { top: 5px; }
+.evalbar .num.on-white { color: var(--ev-black); } .evalbar .num.on-black { color: var(--ev-white); }
+.evalbar .mid { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(200, 50, 43, .7); z-index: 1; }
+.switch { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 9px; padding: 7px 10px; background: transparent; cursor: pointer; width: 100%; font-size: 13px; font-weight: 500; }
+.switch .knob { width: 30px; height: 18px; border-radius: 999px; background: var(--line); position: relative; flex: none; transition: background .2s; }
+.switch .knob::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.switch[aria-checked="true"] .knob { background: var(--accent); }
+.switch[aria-checked="true"] .knob::after { transform: translateX(12px); }
+.board-wrap { width: 100%; aspect-ratio: 1; position: relative; border-radius: 4px; overflow: hidden; box-shadow: var(--shadow); touch-action: none; user-select: none; -webkit-user-select: none; }
 .squares { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); }
 .sq { position: relative; }
 .sq.l { background: var(--sq-light); } .sq.d { background: var(--sq-dark); }
@@ -168,10 +183,15 @@ button { font: inherit; color: inherit; }
 <div class="app">
   <section class="table" aria-label="Board">
     <div class="strip" id="topStrip"></div>
-    <div class="board-wrap" id="board">
-      <div class="squares" id="squares"></div>
-      <div class="pieces" id="pieces"></div>
-      <svg class="fx" id="fx" viewBox="0 0 8 8" preserveAspectRatio="none" aria-hidden="true"></svg>
+    <div class="board-row" id="boardRow">
+      <div class="evalbar" id="evalbar" role="meter" aria-label="Evaluation" aria-valuemin="0" aria-valuemax="100">
+        <div class="fill"></div><div class="mid"></div><span class="num"></span>
+      </div>
+      <div class="board-wrap" id="board">
+        <div class="squares" id="squares"></div>
+        <div class="pieces" id="pieces"></div>
+        <svg class="fx" id="fx" viewBox="0 0 8 8" preserveAspectRatio="none" aria-hidden="true"></svg>
+      </div>
     </div>
     <div class="strip" id="botStrip"></div>
   </section>
@@ -192,9 +212,15 @@ button { font: inherit; color: inherit; }
       <div class="seg" id="levelSeg" style="--n:6"></div>
     </div>
 
-    <div>
-      <div class="label">Play as</div>
-      <div class="seg" id="colorSeg" style="--n:2"></div>
+    <div class="row2">
+      <div>
+        <div class="label">Play as</div>
+        <div class="seg" id="colorSeg" style="--n:2"></div>
+      </div>
+      <div>
+        <div class="label">Display</div>
+        <button class="switch" type="button" role="switch" id="evalToggle" aria-checked="true"><span class="knob"></span>Eval bar</button>
+      </div>
     </div>
 
     <div class="actions">
@@ -454,8 +480,8 @@ const LEVELS = [
 const eloLabel = L => L.elo ? L.elo + ' Elo' : 'Full strength · ~3600';
 
 const G = {
-  human: 'w', ability: 'sniper', level: 2,
-  next: { human: 'w', ability: 'sniper', level: 2 },
+  human: 'w', ability: 'sniper', level: 4,
+  next: { human: 'w', ability: 'sniper', level: 4 }, ev: null, showEval: true,
   s: null, hist: [], log: [], keys: {}, over: null, last: null,
   selected: -1, legal: [], thinking: false,
 };
@@ -533,6 +559,11 @@ const Engine = {
   },
   cancel() { if (this.busy) this.w.postMessage('stop'); if (this.req) this.req.dead = true; this.queued = null; },
   onLine(line) {
+    if (line.startsWith('info') && this.req && !this.req.dead && line.includes(' score ') && !/bound/.test(line)) {
+      const m = line.match(/score (cp|mate) (-?\d+)/);
+      if (m) { const v = +m[2], sign = this.req.s.turn === 'w' ? 1 : -1; setEval(m[1] === 'mate' ? { mate: v * sign } : { cp: v * sign }); }
+      return;
+    }
     if (!line.startsWith('bestmove')) return;
     const r = this.req; this.busy = false; this.req = null;
     const uci = line.split(' ')[1];
@@ -562,7 +593,7 @@ function newGame(keepSettings) {
   Engine.cancel();
   if (!keepSettings) Object.assign(G, { human: G.next.human, ability: G.next.ability, level: G.next.level });
   G.s = parseFEN(START_FEN); G.hist = []; G.log = []; G.keys = {}; G.over = null; G.last = null;
-  G.selected = -1; G.thinking = false;
+  G.selected = -1; G.thinking = false; G.ev = null;
   G.keys[boardKey(G.s)] = 1;
   G.legal = currentLegal(G.s);
   render();
@@ -574,12 +605,12 @@ function play(m) {
   const after = makeMove(before, m);
   const afterLegal = currentLegal(after);
   const san = notate(before, m, legalBefore, after, afterLegal, oppAbFor(after.turn));
-  G.hist.push({ s: before, last: G.last, keys: Object.assign({}, G.keys) });
+  G.hist.push({ s: before, last: G.last, keys: Object.assign({}, G.keys), ev: G.ev });
   G.log.push({ san, shot: !!m.shot, color: before.turn });
   G.s = after; G.legal = afterLegal; G.last = m; G.selected = -1;
   const k = boardKey(after); G.keys[k] = (G.keys[k] || 0) + 1;
   if (!afterLegal.length) {
-    if (inCheck(after, after.turn, oppAbFor(after.turn))) G.over = { kind: 'mate', winner: before.turn };
+    if (inCheck(after, after.turn, oppAbFor(after.turn))) { G.over = { kind: 'mate', winner: before.turn }; G.ev = { mate: 0, winner: before.turn }; }
     else G.over = { kind: 'stalemate' };
   } else if (after.half >= 100) G.over = { kind: 'fifty' };
   else if (G.keys[k] >= 3) G.over = { kind: 'repetition' };
@@ -603,7 +634,7 @@ function undo() {
   let h;
   do { h = G.hist.pop(); G.log.pop(); } while (G.hist.length && h.s.turn !== G.human);
   if (h.s.turn !== G.human) { newGame(true); return; }
-  G.s = h.s; G.last = h.last; G.keys = h.keys; G.over = null; G.selected = -1;
+  G.s = h.s; G.last = h.last; G.keys = h.keys; G.ev = h.ev || null; G.over = null; G.selected = -1;
   G.legal = currentLegal(G.s);
   render();
 }
@@ -630,6 +661,7 @@ function render(anim) {
   renderMoves();
   renderControls();
   renderResult();
+  renderEval();
 }
 
 function targetsOf(from) { return G.legal.filter(m => m.from === from); }
@@ -789,6 +821,34 @@ function renderResult() {
   d.querySelector('#viewBtn').onclick = () => d.remove();
 }
 
+function setEval(e) { G.ev = e; renderEval(); }
+function renderEval() {
+  const row = $('boardRow'), bar = $('evalbar'), sw = $('evalToggle');
+  sw.setAttribute('aria-checked', String(G.showEval));
+  bar.hidden = !G.showEval; row.classList.toggle('no-eval', !G.showEval);
+  if (!G.showEval) return;
+  const e = G.ev;
+  let pct = 50, text = '0.0';   // pct = white's share of the bar
+  if (e && e.mate !== undefined) {
+    const whiteWins = e.winner ? e.winner === 'w' : e.mate > 0;
+    pct = whiteWins ? 100 : 0;
+    text = e.winner ? (whiteWins ? '1-0' : '0-1') : 'M' + Math.abs(e.mate);
+  } else if (e) {
+    pct = 50 + 50 * (2 / (1 + Math.exp(-0.00368 * e.cp)) - 1);
+    pct = Math.max(4, Math.min(96, pct));
+    text = (Math.abs(e.cp) / 100).toFixed(1);
+  }
+  const whiteAhead = pct >= 50;
+  bar.classList.toggle('flip', flip());
+  bar.querySelector('.fill').style.height = pct + '%';
+  const num = bar.querySelector('.num');
+  num.textContent = text;
+  // label sits at the leading side's end of the bar
+  const atBottom = whiteAhead !== flip();
+  num.className = 'num ' + (atBottom ? 'at-bottom' : 'at-top') + ' ' + (whiteAhead ? 'on-white' : 'on-black');
+  bar.setAttribute('aria-valuenow', Math.round(pct));
+  bar.title = 'Stockfish evaluation (normal-chess rules, ignores your power)';
+}
 function setEngineNote() {
   const el = $('engineNote');
   if (Engine.failed) { el.textContent = 'Stockfish could not load here, so a simple built-in bot is playing instead.'; return; }
@@ -875,6 +935,11 @@ document.querySelector('.panel').addEventListener('click', e => {
   if (b.dataset.id) { G.next.ability = b.dataset.id; if (fresh) return newGame(); }
   else if (b.dataset.c) { G.next.human = b.dataset.c; if (fresh) return newGame(); }
   else if (b.dataset.l) { G.next.level = +b.dataset.l; if (fresh) return newGame(); }
+  else if (b.id === 'evalToggle') {
+    G.showEval = !G.showEval;
+    try { localStorage.setItem('uc-eval', G.showEval ? '1' : '0'); } catch (err) {}
+    return renderEval();
+  }
   else if (b.id === 'newBtn') return newGame();
   else if (b.id === 'undoBtn') return undo();
   else if (b.id === 'resignBtn') return resign();
@@ -883,6 +948,7 @@ document.querySelector('.panel').addEventListener('click', e => {
 
 // ===== Boot =====
 function boot(data) {
+  try { const v = localStorage.getItem('uc-eval'); if (v !== null) G.showEval = v === '1'; } catch (e) {}
   try {
     if (data && data.s) {
       Object.assign(G, data, { thinking: false, selected: -1 });
@@ -894,7 +960,7 @@ function boot(data) {
 }
 window.claude?.hot?.snapshot?.(() => ({
   human: G.human, ability: G.ability, level: G.level, next: G.next,
-  s: G.s, hist: G.hist, log: G.log, keys: G.keys, over: G.over, last: G.last,
+  s: G.s, hist: G.hist, log: G.log, keys: G.keys, over: G.over, last: G.last, ev: G.ev,
 }));
 window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
 </script>

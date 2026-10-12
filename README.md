@@ -17,7 +17,7 @@ These are single-threaded builds, so they run on GitHub Pages without special se
 
 ## Strength
 
-You can pick 1400, 1800, 2200, 2600, 3000 or Max.
+You can pick 1400, 1800, 2200, 2600, 3000 (default) or Max. An eval bar beside the board shows Stockfish's evaluation; switch it off under Display.
 
 The numbered levels use Stockfish's own `UCI_Elo` limiter. Max plays at full strength: modern Stockfish is rated around 3600 on CCRL. A single browser thread with a 2.5 s think time plays below that, but still far above any human.
 
