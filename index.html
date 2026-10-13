@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Play Stockfish 19 with a superpower: sniper bishops, amazon queen, nightrider knights, leaping rooks, berserker pawns or Game of Life pawns.">
+<meta name="description" content="Play Stockfish 19 with a superpower: sniper bishops, amazon queen, nightrider knights, leaping rooks, berserker pawns, Game of Life pawns or a Trojan Horse.">
 <title>Unfair Chess</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -274,7 +274,7 @@ button { font: inherit; color: inherit; }
 
 <script>
 const PIECES = {"P": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PHBhdGggZD0iTTIyLjUgOWMtMi4yMSAwLTQgMS43OS00IDQgMCAuODkuMjkgMS43MS43OCAyLjM4QzE3LjMzIDE2LjUgMTYgMTguNTkgMTYgMjFjMCAyLjAzLjk0IDMuODQgMi40MSA1LjAzLTMgMS4wNi03LjQxIDUuNTUtNy40MSAxMy40N2gyM2MwLTcuOTItNC40MS0xMi40MS03LjQxLTEzLjQ3IDEuNDctMS4xOSAyLjQxLTMgMi40MS01LjAzIDAtMi40MS0xLjMzLTQuNS0zLjI4LTUuNjIuNDktLjY3Ljc4LTEuNDkuNzgtMi4zOCAwLTIuMjEtMS43OS00LTQtNHoiIGZpbGw9IiNmZmYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==", "B": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxnIGZpbGw9IiNmZmYiIHN0cm9rZS1saW5lY2FwPSJidXR0Ij48cGF0aCBkPSJNOSAzNmMzLjM5LS45NyAxMC4xMS40MyAxMy41LTIgMy4zOSAyLjQzIDEwLjExIDEuMDMgMTMuNSAyIDAgMCAxLjY1LjU0IDMgMi0uNjguOTctMS42NS45OS0zIC41LTMuMzktLjk3LTEwLjExLjQ2LTEzLjUtMS0zLjM5IDEuNDYtMTAuMTEuMDMtMTMuNSAxLTEuMzU0LjQ5LTIuMzIzLjQ3LTMtLjUgMS4zNTQtMS45NCAzLTIgMy0yeiIvPjxwYXRoIGQ9Ik0xNSAzMmMyLjUgMi41IDEyLjUgMi41IDE1IDAgLjUtMS41IDAtMiAwLTIgMC0yLjUtMi41LTQtMi41LTQgNS41LTEuNSA2LTExLjUtNS0xNS41LTExIDQtMTAuNSAxNC01IDE1LjUgMCAwLTIuNSAxLjUtMi41IDQgMCAwLS41LjUgMCAyeiIvPjxwYXRoIGQ9Ik0yNSA4YTIuNSAyLjUgMCAxIDEtNSAwIDIuNSAyLjUgMCAxIDEgNSAweiIvPjwvZz48cGF0aCBkPSJNMTcuNSAyNmgxME0xNSAzMGgxNW0tNy41LTE0LjV2NU0yMCAxOGg1IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PC9nPjwvc3ZnPg==", "N": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMiAxMGMxMC41IDEgMTYuNSA4IDE2IDI5SDE1YzAtOSAxMC02LjUgOC0yMSIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0yNCAxOGMuMzggMi45MS01LjU1IDcuMzctOCA5LTMgMi0yLjgyIDQuMzQtNSA0LTEuMDQyLS45NCAxLjQxLTMuMDQgMC0zLTEgMCAuMTkgMS4yMy0xIDItMSAwLTQuMDAzIDEtNC00IDAtMiA2LTEyIDYtMTJzMS44OS0xLjkgMi0zLjVjLS43My0uOTk0LS41LTItLjUtMyAxLTEgMyAyLjUgMyAyLjVoMnMuNzgtMS45OTIgMi41LTNjMSAwIDEgMyAxIDMiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNOS41IDI1LjVhLjUuNSAwIDEgMS0xIDAgLjUuNSAwIDEgMSAxIDB6bTUuNDMzLTkuNzVhLjUgMS41IDMwIDEgMS0uODY2LS41LjUgMS41IDMwIDEgMSAuODY2LjV6IiBmaWxsPSIjMDAwIi8+PC9nPjwvc3ZnPg==", "R": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0iI2ZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik05IDM5aDI3di0zSDl2M3ptMy0zdi00aDIxdjRIMTJ6bS0xLTIyVjloNHYyaDVWOWg1djJoNVY5aDR2NSIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiLz48cGF0aCBkPSJNMzQgMTRsLTMgM0gxNGwtMy0zIi8+PHBhdGggZD0iTTMxIDE3djEyLjVIMTRWMTciIHN0cm9rZS1saW5lY2FwPSJidXR0IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PHBhdGggZD0iTTMxIDI5LjVsMS41IDIuNWgtMjBsMS41LTIuNSIvPjxwYXRoIGQ9Ik0xMSAxNGgyMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjwvZz48L3N2Zz4=", "Q": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0iI2ZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik04IDEyYTIgMiAwIDEgMS00IDAgMiAyIDAgMSAxIDQgMHptMTYuNS00LjVhMiAyIDAgMSAxLTQgMCAyIDIgMCAxIDEgNCAwek00MSAxMmEyIDIgMCAxIDEtNCAwIDIgMiAwIDEgMSA0IDB6TTE2IDguNWEyIDIgMCAxIDEtNCAwIDIgMiAwIDEgMSA0IDB6TTMzIDlhMiAyIDAgMSAxLTQgMCAyIDIgMCAxIDEgNCAweiIvPjxwYXRoIGQ9Ik05IDI2YzguNS0xLjUgMjEtMS41IDI3IDBsMi0xMi03IDExVjExbC01LjUgMTMuNS0zLTE1LTMgMTUtNS41LTE0VjI1TDcgMTRsMiAxMnoiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTkgMjZjMCAyIDEuNSAyIDIuNSA0IDEgMS41IDEgMSAuNSAzLjUtMS41IDEtMS41IDIuNS0xLjUgMi41LTEuNSAxLjUuNSAyLjUuNSAyLjUgNi41IDEgMTYuNSAxIDIzIDAgMCAwIDEuNS0xIDAtMi41IDAgMCAuNS0xLjUtMS0yLjUtLjUtMi41LS41LTIgLjUtMy41IDEtMiAyLjUtMiAyLjUtNC04LjUtMS41LTE4LjUtMS41LTI3IDB6IiBzdHJva2UtbGluZWNhcD0iYnV0dCIvPjxwYXRoIGQ9Ik0xMS41IDMwYzMuNS0xIDE4LjUtMSAyMiAwTTEyIDMzLjVjNi0xIDE1LTEgMjEgMCIgZmlsbD0ibm9uZSIvPjwvZz48L3N2Zz4=", "K": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMi41IDExLjYzVjZNMjAgOGg1IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PHBhdGggZD0iTTIyLjUgMjVzNC41LTcuNSAzLTEwLjVjMCAwLTEtMi41LTMtMi41cy0zIDIuNS0zIDIuNWMtMS41IDMgMyAxMC41IDMgMTAuNSIgZmlsbD0iI2ZmZiIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48cGF0aCBkPSJNMTEuNSAzN2M1LjUgMy41IDE1LjUgMy41IDIxIDB2LTdzOS00LjUgNi0xMC41Yy00LTYuNS0xMy41LTMuNS0xNiA0VjI3di0zLjVjLTMuNS03LjUtMTMtMTAuNS0xNi00LTMgNiA1IDEwIDUgMTBWMzd6IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTExLjUgMzBjNS41LTMgMTUuNS0zIDIxIDBtLTIxIDMuNWM1LjUtMyAxNS41LTMgMjEgMG0tMjEgMy41YzUuNS0zIDE1LjUtMyAyMSAwIi8+PC9nPjwvc3ZnPg==", "p": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PHBhdGggZD0iTTIyLjUgOWMtMi4yMSAwLTQgMS43OS00IDQgMCAuODkuMjkgMS43MS43OCAyLjM4QzE3LjMzIDE2LjUgMTYgMTguNTkgMTYgMjFjMCAyLjAzLjk0IDMuODQgMi40MSA1LjAzLTMgMS4wNi03LjQxIDUuNTUtNy40MSAxMy40N2gyM2MwLTcuOTItNC40MS0xMi40MS03LjQxLTEzLjQ3IDEuNDctMS4xOSAyLjQxLTMgMi40MS01LjAzIDAtMi40MS0xLjMzLTQuNS0zLjI4LTUuNjIuNDktLjY3Ljc4LTEuNDkuNzgtMi4zOCAwLTIuMjEtMS43OS00LTQtNHoiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==", "b": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxnIGZpbGw9IiMwMDAiIHN0cm9rZS1saW5lY2FwPSJidXR0Ij48cGF0aCBkPSJNOSAzNmMzLjM5LS45NyAxMC4xMS40MyAxMy41LTIgMy4zOSAyLjQzIDEwLjExIDEuMDMgMTMuNSAyIDAgMCAxLjY1LjU0IDMgMi0uNjguOTctMS42NS45OS0zIC41LTMuMzktLjk3LTEwLjExLjQ2LTEzLjUtMS0zLjM5IDEuNDYtMTAuMTEuMDMtMTMuNSAxLTEuMzU0LjQ5LTIuMzIzLjQ3LTMtLjUgMS4zNTQtMS45NCAzLTIgMy0yeiIvPjxwYXRoIGQ9Ik0xNSAzMmMyLjUgMi41IDEyLjUgMi41IDE1IDAgLjUtMS41IDAtMiAwLTIgMC0yLjUtMi41LTQtMi41LTQgNS41LTEuNSA2LTExLjUtNS0xNS41LTExIDQtMTAuNSAxNC01IDE1LjUgMCAwLTIuNSAxLjUtMi41IDQgMCAwLS41LjUgMCAyeiIvPjxwYXRoIGQ9Ik0yNSA4YTIuNSAyLjUgMCAxIDEtNSAwIDIuNSAyLjUgMCAxIDEgNSAweiIvPjwvZz48cGF0aCBkPSJNMTcuNSAyNmgxME0xNSAzMGgxNW0tNy41LTE0LjV2NU0yMCAxOGg1IiBzdHJva2U9IiNlY2VjZWMiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48L2c+PC9zdmc+", "n": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMiAxMGMxMC41IDEgMTYuNSA4IDE2IDI5SDE1YzAtOSAxMC02LjUgOC0yMSIgZmlsbD0iIzAwMCIvPjxwYXRoIGQ9Ik0yNCAxOGMuMzggMi45MS01LjU1IDcuMzctOCA5LTMgMi0yLjgyIDQuMzQtNSA0LTEuMDQyLS45NCAxLjQxLTMuMDQgMC0zLTEgMCAuMTkgMS4yMy0xIDItMSAwLTQuMDAzIDEtNC00IDAtMiA2LTEyIDYtMTJzMS44OS0xLjkgMi0zLjVjLS43My0uOTk0LS41LTItLjUtMyAxLTEgMyAyLjUgMyAyLjVoMnMuNzgtMS45OTIgMi41LTNjMSAwIDEgMyAxIDMiIGZpbGw9IiMwMDAiLz48cGF0aCBkPSJNOS41IDI1LjVhLjUuNSAwIDEgMS0xIDAgLjUuNSAwIDEgMSAxIDB6bTUuNDMzLTkuNzVhLjUgMS41IDMwIDEgMS0uODY2LS41LjUgMS41IDMwIDEgMSAuODY2LjV6IiBmaWxsPSIjZWNlY2VjIiBzdHJva2U9IiNlY2VjZWMiLz48cGF0aCBkPSJNMjQuNTUgMTAuNGwtLjQ1IDEuNDUuNS4xNWMzLjE1IDEgNS42NSAyLjQ5IDcuOSA2Ljc1UzM1Ljc1IDI5LjA2IDM1LjI1IDM5bC0uMDUuNWgyLjI1bC4wNS0uNWMuNS0xMC4wNi0uODgtMTYuODUtMy4yNS0yMS4zNC0yLjM3LTQuNDktNS43OS02LjY0LTkuMTktNy4xNmwtLjUxLS4xeiIgZmlsbD0iI2VjZWNlYyIgc3Ryb2tlPSJub25lIi8+PC9nPjwvc3ZnPg==", "r": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik05IDM5aDI3di0zSDl2M3ptMy41LTdsMS41LTIuNWgxN2wxLjUgMi41aC0yMHptLS41IDR2LTRoMjF2NEgxMnoiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTE0IDI5LjV2LTEzaDE3djEzSDE0eiIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48cGF0aCBkPSJNMTQgMTYuNUwxMSAxNGgyM2wtMyAyLjVIMTR6TTExIDE0VjloNHYyaDVWOWg1djJoNVY5aDR2NUgxMXoiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTEyIDM1LjVoMjFtLTIwLTRoMTltLTE4LTJoMTdtLTE3LTEzaDE3TTExIDE0aDIzIiBmaWxsPSJub25lIiBzdHJva2U9IiNlY2VjZWMiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjwvZz48L3N2Zz4=", "q": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxnIHN0cm9rZT0ibm9uZSI+PGNpcmNsZSBjeD0iNiIgY3k9IjEyIiByPSIyLjc1Ii8+PGNpcmNsZSBjeD0iMTQiIGN5PSI5IiByPSIyLjc1Ii8+PGNpcmNsZSBjeD0iMjIuNSIgY3k9IjgiIHI9IjIuNzUiLz48Y2lyY2xlIGN4PSIzMSIgY3k9IjkiIHI9IjIuNzUiLz48Y2lyY2xlIGN4PSIzOSIgY3k9IjEyIiByPSIyLjc1Ii8+PC9nPjxwYXRoIGQ9Ik05IDI2YzguNS0xLjUgMjEtMS41IDI3IDBsMi41LTEyLjVMMzEgMjVsLS4zLTE0LjEtNS4yIDEzLjYtMy0xNC41LTMgMTQuNS01LjItMTMuNkwxNCAyNSA2LjUgMTMuNSA5IDI2eiIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiLz48cGF0aCBkPSJNOSAyNmMwIDIgMS41IDIgMi41IDQgMSAxLjUgMSAxIC41IDMuNS0xLjUgMS0xLjUgMi41LTEuNSAyLjUtMS41IDEuNS41IDIuNS41IDIuNSA2LjUgMSAxNi41IDEgMjMgMCAwIDAgMS41LTEgMC0yLjUgMCAwIC41LTEuNS0xLTIuNS0uNS0yLjUtLjUtMiAuNS0zLjUgMS0yIDIuNS0yIDIuNS00LTguNS0xLjUtMTguNS0xLjUtMjcgMHoiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTExIDM4LjVhMzUgMzUgMSAwIDAgMjMgMCIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiLz48cGF0aCBkPSJNMTEgMjlhMzUgMzUgMSAwIDEgMjMgMG0tMjEuNSAyLjVoMjBtLTIxIDNhMzUgMzUgMSAwIDAgMjIgMG0tMjMgM2EzNSAzNSAxIDAgMCAyNCAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNlY2VjZWMiLz48L2c+PC9zdmc+", "k": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMi41IDExLjYzVjYiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48cGF0aCBkPSJNMjIuNSAyNXM0LjUtNy41IDMtMTAuNWMwIDAtMS0yLjUtMy0yLjVzLTMgMi41LTMgMi41Yy0xLjUgMyAzIDEwLjUgMyAxMC41IiBmaWxsPSIjMDAwIiBzdHJva2UtbGluZWNhcD0iYnV0dCIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjxwYXRoIGQ9Ik0xMS41IDM3YzUuNSAzLjUgMTUuNSAzLjUgMjEgMHYtN3M5LTQuNSA2LTEwLjVjLTQtNi41LTEzLjUtMy41LTE2IDRWMjd2LTMuNWMtMy41LTcuNS0xMy0xMC41LTE2LTQtMyA2IDUgMTAgNSAxMFYzN3oiIGZpbGw9IiMwMDAiLz48cGF0aCBkPSJNMjAgOGg1IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PHBhdGggZD0iTTMyIDI5LjVzOC41LTQgNi4wMy05LjY1QzM0LjE1IDE0IDI1IDE4IDIyLjUgMjQuNWwuMDEgMi4xLS4wMS0yLjFDMjAgMTggOS45MDYgMTQgNi45OTcgMTkuODVjLTIuNDk3IDUuNjUgNC44NTMgOSA0Ljg1MyA5IiBzdHJva2U9IiNlY2VjZWMiLz48cGF0aCBkPSJNMTEuNSAzMGM1LjUtMyAxNS41LTMgMjEgMG0tMjEgMy41YzUuNS0zIDE1LjUtMyAyMSAwbS0yMSAzLjVjNS41LTMgMTUuNS0zIDIxIDAiIHN0cm9rZT0iI2VjZWNlYyIvPjwvZz48L3N2Zz4="};
-const POWER_ICONS = {"sniper":"<g transform=\"translate(-5 6) scale(0.95)\" stroke-width=\"2.63\"><circle cx=\"24\" cy=\"9\" r=\"2.4\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M24 12.5c-5.5 5-8.3 9.5-8.3 13.7 0 3.9 3.4 6.3 8.3 6.3s8.3-2.4 8.3-6.3c0-4.2-2.8-8.7-8.3-13.7z\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M26.8 18.5l-4.4 5.5\"/><path d=\"M15.5 39h17\"/><path d=\"M19 32.5l-1 6.5M29 32.5l1 6.5\"/></g><path class=\"a\" d=\"M26 21l8-8\" stroke-width=\"2\" stroke-dasharray=\"2 2.6\"/><g class=\"a\" stroke=\"var(--accent)\"><circle cx=\"38\" cy=\"9\" r=\"5.5\" stroke-width=\"2.2\"/><path d=\"M38 1v4M38 13v4M30 9h4M42 9h4\" stroke-width=\"2.2\"/><circle cx=\"38\" cy=\"9\" r=\"1.5\" fill=\"var(--accent)\" stroke=\"none\"/></g>","amazon":"<g transform=\"translate(3 12) scale(0.88)\" stroke-width=\"2.84\"><path d=\"M15 36l-3-18 7 7 5-12 5 12 7-7-3 18z\" fill=\"currentColor\" fill-opacity=\".14\"/><circle cx=\"12\" cy=\"16\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"24\" cy=\"11\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"36\" cy=\"16\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M13 41h22\"/><path d=\"M15.5 36.5l-1 4.5M32.5 36.5l1 4.5\"/></g><g style=\"color:var(--accent)\" opacity=\"1\"><g transform=\"translate(16.5 -2) scale(-0.5 0.5)\" stroke-width=\"5.00\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"currentColor\" fill-opacity=\".14\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"1.6\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M12 40h20\"/></g></g><g style=\"color:var(--accent)\" opacity=\"1\"><g transform=\"translate(31.5 -2) scale(0.5)\" stroke-width=\"5.00\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"currentColor\" fill-opacity=\".14\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"1.6\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M12 40h20\"/></g></g>","nightrider":"<g transform=\"translate(-4 10) scale(0.82)\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"currentColor\" fill-opacity=\".14\" stroke-width=\"3\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"1.6463414634146343\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M12 40h20\" stroke-width=\"3\"/></g><g class=\"a\" opacity=\".85\"><g transform=\"translate(18 4) scale(0.5)\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"var(--accent)\" fill-opacity=\".14\" stroke-width=\"4.5\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"2.7\" fill=\"var(--accent)\" stroke=\"none\"/><path d=\"M12 40h20\" stroke-width=\"4.5\"/></g></g><g class=\"a\" opacity=\".45\"><g transform=\"translate(33 -2) scale(0.34)\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"var(--accent)\" fill-opacity=\".14\" stroke-width=\"6\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"3.9705882352941173\" fill=\"var(--accent)\" stroke=\"none\"/><path d=\"M12 40h20\" stroke-width=\"6\"/></g></g>","leaping":"<path d=\"M5 41V25h3.5v4h3.5v-4h3.5v4H19v-4h3.5v16z\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M3 43.5h22\"/><circle cx=\"36\" cy=\"37\" r=\"3.2\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M32 43.5h8\"/><path class=\"a\" d=\"M14 19C17 6 37 4 43 20\" stroke-width=\"2.4\"/><path class=\"a\" d=\"M44.5 13.5l-1.5 6.5-6-2.5\" stroke-width=\"2.4\"/>","berserker":"<g transform=\"translate(0 7) scale(0.88)\" stroke-width=\"2.84\"><circle cx=\"24\" cy=\"21\" r=\"5.5\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M16.5 40c0-6.5 2.3-10.8 5.5-12.4h4c3.2 1.6 5.5 5.9 5.5 12.4z\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M13.5 42.5h21\"/></g><path class=\"a\" d=\"M17 14l7-6 7 6\" stroke-width=\"2.6\"/><path class=\"a\" d=\"M17 21l7-6 7 6\" stroke-width=\"2.6\" opacity=\".55\"/>","life":"<rect x=\"18\" y=\"5\" width=\"11\" height=\"11\" rx=\"2\" fill=\"currentColor\" fill-opacity=\".14\"/><rect x=\"31\" y=\"18\" width=\"11\" height=\"11\" rx=\"2\" fill=\"currentColor\" fill-opacity=\".14\"/><rect x=\"5\" y=\"31\" width=\"11\" height=\"11\" rx=\"2\" fill=\"currentColor\" fill-opacity=\".14\"/><rect x=\"18\" y=\"31\" width=\"11\" height=\"11\" rx=\"2\" fill=\"currentColor\" fill-opacity=\".14\"/><rect class=\"a\" x=\"31\" y=\"31\" width=\"11\" height=\"11\" rx=\"2\" fill=\"var(--accent)\" fill-opacity=\".18\"/><circle class=\"a\" cx=\"36.5\" cy=\"34.6\" r=\"1.7\" fill=\"var(--accent)\" stroke=\"none\"/><path class=\"a\" d=\"M33.6 40c0-2.4 1.2-3.6 2.9-3.6s2.9 1.2 2.9 3.6z\" fill=\"var(--accent)\" stroke=\"none\"/><rect x=\"5\" y=\"18\" width=\"11\" height=\"11\" rx=\"2\" stroke-dasharray=\"2 2.5\" stroke-width=\"1.5\" opacity=\".45\"/>"};
+const POWER_ICONS = {"sniper": "<g transform=\"translate(-5 6) scale(0.95)\" stroke-width=\"2.63\"><circle cx=\"24\" cy=\"9\" r=\"2.4\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M24 12.5c-5.5 5-8.3 9.5-8.3 13.7 0 3.9 3.4 6.3 8.3 6.3s8.3-2.4 8.3-6.3c0-4.2-2.8-8.7-8.3-13.7z\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M26.8 18.5l-4.4 5.5\"/><path d=\"M15.5 39h17\"/><path d=\"M19 32.5l-1 6.5M29 32.5l1 6.5\"/></g><path class=\"a\" d=\"M26 21l8-8\" stroke-width=\"2\" stroke-dasharray=\"2 2.6\"/><g class=\"a\" stroke=\"var(--accent)\"><circle cx=\"38\" cy=\"9\" r=\"5.5\" stroke-width=\"2.2\"/><path d=\"M38 1v4M38 13v4M30 9h4M42 9h4\" stroke-width=\"2.2\"/><circle cx=\"38\" cy=\"9\" r=\"1.5\" fill=\"var(--accent)\" stroke=\"none\"/></g>", "amazon": "<g transform=\"translate(3 12) scale(0.88)\" stroke-width=\"2.84\"><path d=\"M15 36l-3-18 7 7 5-12 5 12 7-7-3 18z\" fill=\"currentColor\" fill-opacity=\".14\"/><circle cx=\"12\" cy=\"16\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"24\" cy=\"11\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"36\" cy=\"16\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M13 41h22\"/><path d=\"M15.5 36.5l-1 4.5M32.5 36.5l1 4.5\"/></g><g style=\"color:var(--accent)\" opacity=\"1\"><g transform=\"translate(16.5 -2) scale(-0.5 0.5)\" stroke-width=\"5.00\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"currentColor\" fill-opacity=\".14\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"1.6\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M12 40h20\"/></g></g><g style=\"color:var(--accent)\" opacity=\"1\"><g transform=\"translate(31.5 -2) scale(0.5)\" stroke-width=\"5.00\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"currentColor\" fill-opacity=\".14\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"1.6\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M12 40h20\"/></g></g>", "nightrider": "<g transform=\"translate(-4 10) scale(0.82)\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"currentColor\" fill-opacity=\".14\" stroke-width=\"3\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"1.6463414634146343\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M12 40h20\" stroke-width=\"3\"/></g><g class=\"a\" opacity=\".85\"><g transform=\"translate(18 4) scale(0.5)\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"var(--accent)\" fill-opacity=\".14\" stroke-width=\"4.5\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"2.7\" fill=\"var(--accent)\" stroke=\"none\"/><path d=\"M12 40h20\" stroke-width=\"4.5\"/></g></g><g class=\"a\" opacity=\".45\"><g transform=\"translate(33 -2) scale(0.34)\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"var(--accent)\" fill-opacity=\".14\" stroke-width=\"6\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"3.9705882352941173\" fill=\"var(--accent)\" stroke=\"none\"/><path d=\"M12 40h20\" stroke-width=\"6\"/></g></g>", "leaping": "<path d=\"M5 41V25h3.5v4h3.5v-4h3.5v4H19v-4h3.5v16z\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M3 43.5h22\"/><circle cx=\"36\" cy=\"37\" r=\"3.2\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M32 43.5h8\"/><path class=\"a\" d=\"M14 19C17 6 37 4 43 20\" stroke-width=\"2.4\"/><path class=\"a\" d=\"M44.5 13.5l-1.5 6.5-6-2.5\" stroke-width=\"2.4\"/>", "berserker": "<g transform=\"translate(0 7) scale(0.88)\" stroke-width=\"2.84\"><circle cx=\"24\" cy=\"21\" r=\"5.5\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M16.5 40c0-6.5 2.3-10.8 5.5-12.4h4c3.2 1.6 5.5 5.9 5.5 12.4z\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M13.5 42.5h21\"/></g><path class=\"a\" d=\"M17 14l7-6 7 6\" stroke-width=\"2.6\"/><path class=\"a\" d=\"M17 21l7-6 7 6\" stroke-width=\"2.6\" opacity=\".55\"/>", "life": "<rect x=\"18\" y=\"5\" width=\"11\" height=\"11\" rx=\"2\" fill=\"currentColor\" fill-opacity=\".14\"/><rect x=\"31\" y=\"18\" width=\"11\" height=\"11\" rx=\"2\" fill=\"currentColor\" fill-opacity=\".14\"/><rect x=\"5\" y=\"31\" width=\"11\" height=\"11\" rx=\"2\" fill=\"currentColor\" fill-opacity=\".14\"/><rect x=\"18\" y=\"31\" width=\"11\" height=\"11\" rx=\"2\" fill=\"currentColor\" fill-opacity=\".14\"/><rect class=\"a\" x=\"31\" y=\"31\" width=\"11\" height=\"11\" rx=\"2\" fill=\"var(--accent)\" fill-opacity=\".18\"/><circle class=\"a\" cx=\"36.5\" cy=\"34.6\" r=\"1.7\" fill=\"var(--accent)\" stroke=\"none\"/><path class=\"a\" d=\"M33.6 40c0-2.4 1.2-3.6 2.9-3.6s2.9 1.2 2.9 3.6z\" fill=\"var(--accent)\" stroke=\"none\"/><rect x=\"5\" y=\"18\" width=\"11\" height=\"11\" rx=\"2\" stroke-dasharray=\"2 2.5\" stroke-width=\"1.5\" opacity=\".45\"/>", "trojan": "<g transform=\"translate(1 -3) scale(.95)\" stroke-width=\"2.63\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"currentColor\" fill-opacity=\".14\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"1.6\" fill=\"currentColor\" stroke=\"none\"/></g><path class=\"a\" d=\"M7 34.5h30v4.5H7z\" fill=\"var(--accent)\" fill-opacity=\".2\" stroke-width=\"2.4\"/><circle class=\"a\" cx=\"13\" cy=\"43\" r=\"3\" stroke-width=\"2.4\"/><circle class=\"a\" cx=\"31\" cy=\"43\" r=\"3\" stroke-width=\"2.4\"/><path class=\"a\" d=\"M38.5 22.5v8M38.5 22.5l3.5 3.5M38.5 22.5l-3.5 3.5\" stroke-width=\"2.2\"/>"};
 const powerIcon = id => `<svg class="picon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${POWER_ICONS[id]}</svg>`;
 // ===== Rules core: standard chess + one-sided abilities =====
 const FILES = 'abcdefgh';
@@ -410,7 +410,10 @@ function pseudoMoves(s, c, ab, oppAb) {
         if (b[to] && colorOf(b[to]) === enemy) pushP(to);
         else if (to === s.ep && !b[to]) ms.push({ from: i, to, piece: p, cap: c === 'w' ? 'p' : 'P', ep: true });
       }
-    } else if (t === 'n') { ab === 'nightrider' ? ray(KN) : step(KN); }
+    } else if (t === 'n') {
+      ab === 'nightrider' ? ray(KN) : step(KN);
+      if (ab === 'trojan') { const u = unloadSquares(b, i); if (u.length) ms.push({ from: i, to: i, piece: p, cap: null, unload: u }); }
+    }
     else if (t === 'b') ray(DIAG, ab === 'sniper' ? { capExtra: { shot: true } } : {});
     else if (t === 'r') ray(ORTH, { leap: ab === 'leaping' });
     else if (t === 'q') { ray(DIAG); ray(ORTH); if (ab === 'amazon') step(KN); }
@@ -431,8 +434,27 @@ function pseudoMoves(s, c, ab, oppAb) {
   return ms;
 }
 
+// Trojan Horse: the knight opens and fills its 3x3 block with pawns: its own square plus every
+// empty neighbour. Pawns can't stand on ranks 1 and 8, so those squares are skipped (a knight on
+// a back rank just disappears after unloading).
+function unloadSquares(b, i) {
+  const f = i & 7, r = i >> 3, out = [];
+  for (let dr = -1; dr <= 1; dr++) for (let df = -1; df <= 1; df++) {
+    const x = f + df, y = r + dr;
+    if (!onB(x, y) || y === 0 || y === 7) continue;
+    const j = idx(x, y);
+    if (j === i || !b[j]) out.push(j);
+  }
+  return out;
+}
+
 function makeMove(s, m) {
   const b = s.b.slice(), c = s.turn, p = b[m.from];
+  if (m.unload) {
+    b[m.from] = null;
+    for (const j of m.unload) b[j] = c === 'w' ? 'P' : 'p';
+    return { b, turn: other(c), castle: Object.assign({}, s.castle), ep: -1, half: 0, full: c === 'b' ? s.full + 1 : s.full };
+  }
   if (m.shot) b[m.to] = null;
   else {
     b[m.to] = m.promo ? (c === 'w' ? m.promo.toUpperCase() : m.promo) : p;
@@ -510,7 +532,8 @@ const uciOf = m => sqName(m.from) + sqName(m.to) + (m.promo || '');
 function notate(s, m, legal, after, afterLegal, oppAbAfter) {
   let str;
   const t = typeOf(m.piece);
-  if (m.castle) str = m.castle === 'K' ? 'O-O' : 'O-O-O';
+  if (m.unload) str = 'N' + sqName(m.from) + '⇒' + m.unload.length + 'P';
+  else if (m.castle) str = m.castle === 'K' ? 'O-O' : 'O-O-O';
   else if (t === 'p') {
     str = (m.cap ? FILES[m.from & 7] + 'x' : '') + sqName(m.to) + (m.promo ? '=' + m.promo.toUpperCase() : '');
     if (m.straight) str = FILES[m.from & 7] + 'x' + sqName(m.to) + (m.promo ? '=' + m.promo.toUpperCase() : '');
@@ -546,6 +569,7 @@ const POWERS = [
   { id: 'leaping', name: 'Leaping Rooks', icon: 'R', rule: 'Rooks can hop over one piece in their path.' },
   { id: 'berserker', name: 'Berserker Pawns', icon: 'P', rule: 'Pawns can also capture straight ahead.' },
   { id: 'life', name: 'Game of Life Pawns', icon: 'p', rule: 'After each of your moves, your pawns follow Conway\'s Life: 2–3 neighbours survive, an empty square with exactly 3 grows a new pawn.' },
+  { id: 'trojan', name: 'Trojan Horse', icon: 'N', rule: 'Double-tap a knight: it opens and fills every free square of its 3×3 block with your pawns (up to 9). The knight is used up.' },
 ];
 const LEVELS = [
   { name: '1400', elo: 1400, ms: 600 },
@@ -633,7 +657,7 @@ const Engine = {
       this.w.postMessage('setoption name UCI_LimitStrength value true');
       this.w.postMessage('setoption name UCI_Elo value ' + L.elo);
     } else this.w.postMessage('setoption name UCI_LimitStrength value false');
-    this.w.postMessage('position fen ' + toFEN(r.s));
+    this.w.postMessage('position fen ' + engineFEN(r.s));
     const sm = [...new Set(r.legal.map(uciOf))].join(' ');
     this.w.postMessage('go movetime ' + L.ms + ' searchmoves ' + sm);
   },
@@ -659,10 +683,23 @@ const Engine = {
     const r = this.req; this.busy = false; this.req = null;
     const uci = line.split(' ')[1];
     if (this.spare) { const s = this.spare; this.spare = null; this.attach(s, 'full'); }
-    if (r && !r.dead) r.cb(r.legal.find(m => uciOf(m) === uci) || r.legal.find(m => uciOf(m) + 'q' === uci) || r.legal[Math.floor(Math.random() * r.legal.length)]);
+    if (r && !r.dead) r.cb(r.legal.find(m => uciOf(m) === uci) || r.legal.find(m => uciOf(m) + 'q' === uci) || fallbackPick(r.s, r.legal, r.level));
     if (this.queued && !this.busy) { const q = this.queued; this.queued = null; this.go(q); }
   },
 };
+// Stockfish refuses positions where a side has more than 8 pawns (Trojan Horse can make up to 16).
+// It is shown only your 8 most advanced pawns; the rest are hidden from it, like your power is.
+// Its moves are still limited to ones that are legal on the real board.
+function engineFEN(s) {
+  const P = G.human === 'w' ? 'P' : 'p', pawns = [];
+  s.b.forEach((x, i) => { if (x === P) pawns.push(i); });
+  if (pawns.length <= 8) return toFEN(s);
+  const adv = i => G.human === 'w' ? (i >> 3) : 7 - (i >> 3);
+  pawns.sort((a, b) => adv(b) - adv(a));
+  const b = s.b.slice();
+  for (const i of pawns.slice(8)) b[i] = null;
+  return toFEN(Object.assign({}, s, { b }));
+}
 // Backup opponent if Stockfish can't load: shallow material search
 function evalMat(b, c) { let v = 0; for (const p of b) if (p) v += (colorOf(p) === c ? 1 : -1) * VAL[typeOf(p)]; return v; }
 function fallbackPick(s, legal, level) {
@@ -801,6 +838,14 @@ function animate(m) {
     g.style.backgroundImage = `url("${PIECES[m.cap]}")`;
     if (!m.shot) g.style.animationDelay = '.12s';
     piecesEl.appendChild(g); setTimeout(() => g.remove(), 800);
+  }
+  if (m.unload) {
+    const g = document.createElement('div'), { x, y } = posOf(m.from);
+    g.className = 'pc ghost'; g.style.left = x * 12.5 + '%'; g.style.top = y * 12.5 + '%';
+    g.style.backgroundImage = `url("${PIECES[m.piece]}")`;
+    piecesEl.appendChild(g); setTimeout(() => g.remove(), 800);
+    m.unload.forEach((j, k) => { const el = piecesEl.querySelector(`.pc[data-sq="${j}"]`); if (el) { el.classList.add('born'); el.style.animationDelay = (0.15 + k * 0.05) + 's'; } });
+    return;
   }
   const L = G.s.life;
   if (L) {
@@ -965,7 +1010,7 @@ function setEngineNote() {
 }
 
 // ===== Input =====
-let drag = null;
+let drag = null, lastTap = { key: '', t: 0 };
 function sqFromPoint(cx, cy) {
   const r = boardEl.getBoundingClientRect();
   const x = Math.floor((cx - r.left) / r.width * 8), y = Math.floor((cy - r.top) / r.height * 8);
@@ -997,7 +1042,16 @@ boardEl.addEventListener('pointerdown', e => {
   if (e.target.closest('.result, .promo')) return;
   const sq = sqFromPoint(e.clientX, e.clientY);
   if (sq < 0 || !canAct()) return;
-  if (G.selected >= 0 && G.selected !== sq && tryMove(G.selected, sq)) return;
+  // Double-tap = two taps that both select the same knight of yours (not a move onto that square)
+  const now = performance.now(), tapKey = sq + ':' + G.log.length;
+  if (G.ability === 'trojan' && lastTap.key === tapKey && now - lastTap.t < 450) {
+    const u = G.legal.find(m => m.unload && m.from === sq);
+    lastTap = { key: '', t: 0 };
+    if (u) { drag = null; play(u); return; }
+  }
+  if (G.selected >= 0 && G.selected !== sq && tryMove(G.selected, sq)) { lastTap = { key: '', t: 0 }; return; }
+  const tapped = G.s.b[sq];
+  lastTap = tapped && colorOf(tapped) === G.human && typeOf(tapped) === 'n' ? { key: tapKey, t: now } : { key: '', t: 0 };
   const p = G.s.b[sq];
   if (p && colorOf(p) === G.human) {
     const reselect = G.selected === sq;
@@ -1017,6 +1071,17 @@ function showLifePreview(from, to) {
   if (key === previewKey) return;
   previewKey = key; previewEl.innerHTML = '';
   const hint = $('lifeHint');
+  if (G.ability === 'trojan') {
+    const isKnight = from >= 0 && G.s.b[from] && typeOf(G.s.b[from]) === 'n';
+    const u = isKnight && G.legal.find(m => m.unload && m.from === from);
+    if (u && !exact) {
+      const P = G.human === 'w' ? 'P' : 'p';
+      previewEl.innerHTML = u.unload.map(j => { const { x, y } = posOf(j); return `<div class="pv born" style="left:${x * 12.5}%;top:${y * 12.5}%;background-image:url('${PIECES[P]}')"></div>`; }).join('');
+    }
+    hint.textContent = !isKnight ? '' : u ? `Double-tap the knight to unload ${u.unload.length} pawn${u.unload.length > 1 ? 's' : ''}.` : 'No room to unload this knight here.';
+    hint.hidden = !isKnight;
+    return;
+  }
   if (!G.showLife || G.ability !== 'life' || !moves.length) { hint.hidden = true; return; }
   // Exact result for the hovered square, otherwise a summary over every move this piece can make:
   // solid marks happen whichever square you pick, faint ones only for some squares.

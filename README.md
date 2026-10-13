@@ -1,7 +1,7 @@
 # Unfair Chess
 
 Play Stockfish 19 with a one-sided superpower: Sniper Bishops, Amazon Queen,
-Nightrider Knights, Leaping Rooks, Berserker Pawns or Game of Life Pawns.
+Nightrider Knights, Leaping Rooks, Berserker Pawns, Game of Life Pawns or Trojan Horse.
 
 Live: https://thanhpt-91.github.io/unfair-chess/
 
@@ -15,6 +15,7 @@ Each power has its own link. Refreshing the page starts a new game with that pow
 | Leaping Rooks | https://thanhpt-91.github.io/unfair-chess/#leaping |
 | Berserker Pawns | https://thanhpt-91.github.io/unfair-chess/#berserker |
 | Game of Life Pawns | https://thanhpt-91.github.io/unfair-chess/#life |
+| Trojan Horse | https://thanhpt-91.github.io/unfair-chess/#trojan |
 
 It's a static site, so there's no build step and no server code.
 
@@ -27,6 +28,10 @@ It's a static site, so there's no build step and no server code.
 These are single-threaded builds, so they run on GitHub Pages without special server headers.
 
 - `sw.js`: a service worker. It keeps the engines in the browser's Cache Storage, so the 99 MB net downloads only once (the normal HTTP cache drops files that large). It also opens the page from cache straight away and checks GitHub in the background. When a newer version has been deployed, a "new version is ready" notice appears with a Reload button.
+
+## Trojan Horse and Stockfish
+
+Double-tap one of your knights to fill its 3×3 block with your pawns, so you can end up with up to 16 pawns. Stockfish refuses any position where a side has more than 8 pawns, so it is shown only your 8 most advanced pawns. The rest are hidden from it, the same way it can't see your power. It can still only play moves that are legal on the real board.
 
 ## Strength
 
