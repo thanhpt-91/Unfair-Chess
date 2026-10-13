@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Play Stockfish 19, Stockfish 11, Fairy-Stockfish or Lozza with a superpower: sniper bishops, amazon queen, nightrider knights, leaping rooks, berserker pawns, Game of Life pawns, a Trojan Horse or a Secret Queen.">
+<meta name="description" content="Play Stockfish 19, Stockfish 11, Fairy-Stockfish or Lozza with a superpower: sniper bishops, amazon queen, nightrider knights, leaping rooks, berserker pawns, Game of Life pawns, a Trojan Horse or a Secret Piece.">
 <title>Unfair Chess</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -141,6 +141,10 @@ button { font: inherit; color: inherit; }
   max-width: 70%; padding: 12px 16px; border-radius: 12px; text-align: center; font-size: clamp(13px, 2.2vw, 16px); line-height: 1.35;
   background: var(--panel); color: var(--ink); box-shadow: var(--shadow); border: 2px solid var(--accent); }
 .pick-banner b { color: var(--accent); }
+.pick-banner { display: grid; gap: 8px; justify-items: center; }
+.pick-types { display: flex; gap: 6px; pointer-events: auto; }
+.pick-types button { width: clamp(40px, 7vw, 56px); aspect-ratio: 1; border-radius: 10px; border: 1px solid var(--line); background: var(--bg) center/80% no-repeat; cursor: pointer; }
+.pick-types button[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); background-color: var(--accent-soft); }
 .sq.pickable::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 3px var(--accent); animation: pvPulse 1.4s ease-in-out infinite; }
 .sq.hover::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 4px rgba(255,255,255,.65); }
 
@@ -148,10 +152,8 @@ button { font: inherit; color: inherit; }
 .pc { position: absolute; width: 12.5%; height: 12.5%; background-size: 100% 100%; will-change: transform; }
 .pc.anim { transition: transform .18s cubic-bezier(.3,.7,.3,1); }
 .pc.drag { z-index: 10; filter: drop-shadow(0 6px 8px rgba(0,0,0,.35)); transition: none; }
-.pc.secret::after { content: ""; position: absolute; right: 4%; top: 2%; width: 34%; height: 26%;
-  background: var(--accent); border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,.35);
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 18'%3E%3Cpath d='M2 16 0 3l6 5 6-8 6 8 6-5-2 13z'/%3E%3C/svg%3E") center/contain no-repeat;
-          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 18'%3E%3Cpath d='M2 16 0 3l6 5 6-8 6 8 6-5-2 13z'/%3E%3C/svg%3E") center/contain no-repeat; }
+.pc.secret::after { content: ""; position: absolute; right: 2%; top: 2%; width: 40%; height: 40%; border-radius: 50%;
+  background: var(--panel) var(--badge) center/82% no-repeat; box-shadow: 0 0 0 2px var(--accent), 0 1px 3px rgba(0,0,0,.35); }
 .moves .reveal { color: var(--accent); font-size: 11px; margin-left: 4px; }
 .pc.ghost { animation: hit .55s ease-out forwards; }
 .pc.born { animation: born .5s .2s both cubic-bezier(.3,1.5,.5,1); }
@@ -229,7 +231,11 @@ button { font: inherit; color: inherit; }
         <div class="squares" id="squares"></div>
         <div class="pieces" id="pieces"></div>
         <div class="preview" id="preview" aria-hidden="true"></div>
-        <div class="pick-banner" id="pickBanner" role="status" hidden>Tap one of your pawns to make it your <b>secret queen</b>.</div>
+        <div class="pick-banner" id="pickBanner" role="group" aria-label="Choose your secret piece" hidden>
+          <div>Choose your <b>secret piece</b>,</div>
+          <div class="pick-types" id="pickTypes"></div>
+          <div>then tap one of your pawns.</div>
+        </div>
         <svg class="fx" id="fx" viewBox="0 0 8 8" preserveAspectRatio="none" aria-hidden="true"></svg>
       </div>
     </div>
@@ -364,7 +370,11 @@ function attackMap(b, by, ab) {
       const d = by === 'w' ? 1 : -1;
       step([[-1, d], [1, d]]);
       if (ab === 'berserker') step([[0, d]]);
-      if (t === 's') { ray(DIAG); ray(ORTH); }
+      if (t === 's') {
+        if (SECRET_TYPE === 'q' || SECRET_TYPE === 'b') ray(DIAG);
+        if (SECRET_TYPE === 'q' || SECRET_TYPE === 'r') ray(ORTH);
+        if (SECRET_TYPE === 'n') step(KN);
+      }
     } else if (t === 'n') { ab === 'nightrider' ? ray(KN) : step(KN); }
     else if (t === 'b') ray(DIAG);
     else if (t === 'r') ray(ORTH, ab === 'leaping');
@@ -430,9 +440,11 @@ function pseudoMoves(s, c, ab, oppAb) {
         // Secret Queen: also every queen move (pawn-style duplicates skipped; last rank = real queen)
         const have = new Set(ms.filter(m => m.from === i).map(m => m.to));
         const before = ms.length;
-        ray(DIAG); ray(ORTH);
+        if (SECRET_TYPE === 'q' || SECRET_TYPE === 'b') ray(DIAG);
+        if (SECRET_TYPE === 'q' || SECRET_TYPE === 'r') ray(ORTH);
+        if (SECRET_TYPE === 'n') step(KN);
         const added = ms.splice(before).filter(m => !have.has(m.to));
-        for (const m of added) { if ((m.to >> 3) === last) m.promo = 'q'; m.secret = true; ms.push(m); }
+        for (const m of added) { m.secret = true; ms.push(m); }
       }
     } else if (t === 'n') {
       ab === 'nightrider' ? ray(KN) : step(KN);
@@ -544,13 +556,23 @@ function queenLineHits(b, from, target) {
   while (x !== tf || y !== tr) { if (b[idx(x, y)]) return false; x += df; y += dr; }
   return true;
 }
+function secretChecks(b, i, k, type) {
+  const df = Math.abs((k & 7) - (i & 7)), dr = Math.abs((k >> 3) - (i >> 3));
+  if (type === 'n') return (df === 1 && dr === 2) || (df === 2 && dr === 1);
+  if (type === 'r' && df && dr) return false;
+  if (type === 'b' && df !== dr) return false;
+  return queenLineHits(b, i, k);
+}
 function revealSecret(n, m, mover) {
-  const S = mover === 'w' ? 'S' : 's', Q = mover === 'w' ? 'Q' : 'q';
+  const S = mover === 'w' ? 'S' : 's';
   const i = n.b.indexOf(S);
   if (i < 0) return;
   const k = kingSq(n.b, other(mover));
   const pawnCheck = (k >> 3) - (i >> 3) === (mover === 'w' ? 1 : -1) && Math.abs((k & 7) - (i & 7)) === 1;
-  if ((m.secret && m.to === i) || (queenLineHits(n.b, i, k) && !pawnCheck)) { n.b[i] = Q; n.revealed = i; }
+  if ((m.secret && m.to === i) || (secretChecks(n.b, i, k, SECRET_TYPE) && !pawnCheck)) {
+    n.b[i] = mover === 'w' ? SECRET_TYPE.toUpperCase() : SECRET_TYPE;
+    n.revealed = i;
+  }
 }
 
 function applyMove(s, m, ab) {
@@ -579,7 +601,7 @@ function notate(s, m, legal, after, afterLegal, oppAbAfter) {
   const t = typeOf(m.piece);
   if (m.unload) str = 'N' + sqName(m.from) + '⇒' + m.unload.length + 'P';
   else if (m.castle) str = m.castle === 'K' ? 'O-O' : 'O-O-O';
-  else if (t === 's' && m.secret) str = '♕' + (m.cap ? 'x' : '') + sqName(m.to) + (m.promo ? '=Q' : '');
+  else if (t === 's' && m.secret) str = { q: '♕', r: '♖', b: '♗', n: '♘' }[SECRET_TYPE] + (m.cap ? 'x' : '') + sqName(m.to);
   else if (t === 'p' || t === 's') {
     str = (m.cap ? FILES[m.from & 7] + 'x' : '') + sqName(m.to) + (m.promo ? '=' + m.promo.toUpperCase() : '');
     if (m.straight) str = FILES[m.from & 7] + 'x' + sqName(m.to) + (m.promo ? '=' + m.promo.toUpperCase() : '');
@@ -604,6 +626,9 @@ function insufficient(b) {
 }
 
 const VAL = { p: 100, s: 900, n: 300, b: 320, r: 500, q: 900, k: 0 };
+// Secret Piece: which piece the secret pawn really is ('q', 'r', 'b' or 'n'); one per game
+let SECRET_TYPE = 'q';
+function setSecretType(t) { SECRET_TYPE = t; VAL.s = VAL[t]; }
 
 </script>
 <script>
@@ -616,14 +641,14 @@ const POWERS = [
   { id: 'berserker', name: 'Berserker Pawns', icon: 'P', rule: 'Pawns can also capture straight ahead.' },
   { id: 'life', name: 'Game of Life Pawns', icon: 'p', rule: 'After each of your moves, your pawns follow Conway\'s Life: 2–3 neighbours survive, an empty square with exactly 3 grows a new pawn.' },
   { id: 'trojan', name: 'Trojan Horse', icon: 'N', rule: 'Double-tap a knight: it opens and fills every free square of its 3×3 block with your pawns (up to 9). The knight is used up.' },
-  { id: 'secret', name: 'Secret Queen', icon: 'P', rule: 'Pick one of your pawns at the start. It secretly moves like a queen, until it makes a move a pawn can\'t or gives check along a queen line. Then it is revealed as a real queen.' },
+  { id: 'secret', name: 'Secret Piece', icon: 'P', rule: 'Before your first move, choose a queen, rook, bishop or knight and tap one of your pawns. It secretly moves like that piece too, until it makes a move a pawn can\'t or gives check as that piece. Then it is revealed.' },
 ];
 const LEVELS = [{ name: 'Max', elo: null, ms: 1200 }];  // think time per move
 const eloLabel = L => L.elo ? L.elo + ' Elo' : 'Full strength · ~3600';
 
 const G = {
   human: 'w', ability: 'sniper', level: 0,
-  next: { human: 'w', ability: 'sniper', level: 0 }, ev: null, showEval: true, showLife: false,
+  next: { human: 'w', ability: 'sniper', level: 0 }, ev: null, showEval: true, showLife: false, secretType: 'r',
   s: null, hist: [], log: [], keys: {}, over: null, last: null,
   selected: -1, legal: [], thinking: false,
 };
@@ -861,6 +886,7 @@ function newGame(keepSettings) {
   Engine.cancel();
   if (!keepSettings) Object.assign(G, { human: G.next.human, ability: G.next.ability, level: G.next.level });
   G.s = parseFEN(START_FEN); G.hist = []; G.log = []; G.keys = {}; G.over = null; G.last = null;
+  setSecretType(G.secretType);
   G.selected = -1; G.thinking = false; G.ev = null; G.secretChosen = false;
   G.keys[boardKey(G.s)] = 1;
   G.legal = currentLegal(G.s);
@@ -939,6 +965,9 @@ function renderBoard(anim) {
   // Secret Queen: before the first move, ask (in the middle of the board) which pawn to use
   const picking = G.ability === 'secret' && !G.secretChosen && !G.over && G.s.turn === G.human;
   $('pickBanner').hidden = !picking;
+  if (picking) {
+    $('pickTypes').innerHTML = ['q', 'r', 'b', 'n'].map(x => `<button type="button" data-type="${x}" aria-pressed="${G.secretType === x}" aria-label="${SECRET_NAMES[x]}" title="${SECRET_NAMES[x]}" style="background-image:url('${PIECES[G.human === 'w' ? x.toUpperCase() : x]}')"></button>`).join('');
+  }
   if (typeof clearLifePreview === 'function') clearLifePreview();
   const s = G.s;
   const checkSq = inCheck(s, s.turn, oppAbFor(s.turn)) ? kingSq(s.b, s.turn) : -1;
@@ -966,6 +995,7 @@ function renderBoard(anim) {
     const el = document.createElement('div');
     const { x, y } = posOf(i);
     el.className = 'pc' + (typeOf(p) === 's' ? ' secret' : ''); el.dataset.sq = i;
+    if (typeOf(p) === 's') el.style.setProperty('--badge', `url("${PIECES[colorOf(p) === 'w' ? G.secretType.toUpperCase() : G.secretType]}")`);
     el.style.left = x * 12.5 + '%'; el.style.top = y * 12.5 + '%';
     el.style.backgroundImage = `url("${PIECES[p]}")`;
     piecesEl.appendChild(el);
@@ -1058,9 +1088,9 @@ function renderStatus() {
   if (G.over) { el.textContent = resultText().title; return; }
   if (G.thinking) { el.innerHTML = '<span class="spin"></span>' + playingName() + ' is thinking…'; return; }
   const chk = inCheck(G.s, G.s.turn, oppAbFor(G.s.turn));
-  if (G.s.turn === G.human && G.ability === 'secret' && !G.secretChosen) { el.textContent = 'Tap one of your pawns to make it your secret queen.'; return; }
+  if (G.s.turn === G.human && G.ability === 'secret' && !G.secretChosen) { el.textContent = 'Choose your secret piece, then tap one of your pawns.'; return; }
   const secretOn = G.ability === 'secret' && G.s.b.includes(G.human === 'w' ? 'S' : 's');
-  if (G.s.turn === G.human) el.textContent = (chk ? 'You are in check. Your move.' : 'Your move.') + (secretOn ? ' Your secret queen is the pawn with the crown.' : '');
+  if (G.s.turn === G.human) el.textContent = (chk ? 'You are in check. Your move.' : 'Your move.') + (secretOn ? ` Your secret ${SECRET_NAMES[G.secretType]} is the pawn with the badge.` : '');
   else el.textContent = 'Stockfish to move.';
   $('topStrip') && renderStrips();
 }
@@ -1194,7 +1224,7 @@ function askPromo(ms) {
   boardEl.appendChild(d);
 }
 boardEl.addEventListener('pointerdown', e => {
-  if (e.target.closest('.result, .promo')) return;
+  if (e.target.closest('.result, .promo, .pick-types')) return;
   const sq = sqFromPoint(e.clientX, e.clientY);
   if (sq < 0 || !canAct()) return;
   if (G.ability === 'secret' && !G.secretChosen) {
@@ -1224,6 +1254,11 @@ boardEl.addEventListener('pointerdown', e => {
     drag = { from: sq, el, x0: e.clientX, y0: e.clientY, moved: false, reselect, over: -1 };
     boardEl.setPointerCapture(e.pointerId);
   } else { G.selected = -1; renderBoard(); }
+});
+$('pickTypes').addEventListener('click', e => {
+  const b = e.target.closest('button[data-type]');
+  if (!b || G.secretChosen) return;
+  chooseSecretType(b.dataset.type); renderBoard(); renderStatus();
 });
 const previewEl = $('preview');
 let previewKey = '';
@@ -1334,17 +1369,31 @@ document.querySelector('.panel').addEventListener('click', e => {
 // ===== Boot =====
 // Each power has its own link (#sniper, #amazon, #nightrider, #leaping, #berserker, #life),
 // so refreshing the page starts a new game with the same power.
+const SECRET_NAMES = { q: 'queen', r: 'rook', b: 'bishop', n: 'knight' };
 function hashPower() {
   const h = (location.hash || '').slice(1).toLowerCase();
+  const m = h.match(/^secret-(queen|rook|bishop|knight)$/);
+  if (m) return 'secret';
   return POWERS.some(p => p.id === h) ? h : null;
 }
+function hashSecretType() {
+  const m = (location.hash || '').toLowerCase().match(/^#secret-(queen|rook|bishop|knight)$/);
+  return m ? Object.keys(SECRET_NAMES).find(k => SECRET_NAMES[k] === m[1]) : null;
+}
+function chooseSecretType(x) {
+  G.secretType = x; setSecretType(x);
+  try { localStorage.setItem('uc-secret-type', x); } catch (e) {}
+  if (G.next.ability === 'secret') setPowerHash('secret');
+}
 function setPowerHash(id) {
-  if (hashPower() === id) return;
-  try { history.replaceState(null, '', '#' + id); } catch (e) { try { location.hash = id; } catch (e2) {} }
+  const token = id === 'secret' ? 'secret-' + SECRET_NAMES[G.secretType] : id;
+  if ((location.hash || '').slice(1).toLowerCase() === token) return;
+  try { history.replaceState(null, '', '#' + token); } catch (e) { try { location.hash = token; } catch (e2) {} }
 }
 window.addEventListener('hashchange', () => {
-  const id = hashPower();
-  if (!id || (id === G.ability && id === G.next.ability)) return;
+  const id = hashPower(), ty = hashSecretType();
+  if (ty && ty !== G.secretType) { chooseSecretType(ty); if (id === G.ability && !G.secretChosen) return renderBoard(); }
+  if (!id || (id === G.ability && id === G.next.ability && !ty)) return;
   G.next.ability = id; newGame();
 });
 // Offline cache (sw.js, only on the real site): engines are kept permanently and the page opens
@@ -1361,7 +1410,7 @@ if ('serviceWorker' in navigator && /github\.io$|^localhost$|^127\.0\.0\.1$/.tes
 }
 const snapshotState = () => ({
   human: G.human, ability: G.ability, level: G.level, next: G.next,
-  s: G.s, hist: G.hist, log: G.log, keys: G.keys, over: G.over, last: G.last, ev: G.ev, secretChosen: G.secretChosen,
+  s: G.s, hist: G.hist, log: G.log, keys: G.keys, over: G.over, last: G.last, ev: G.ev, secretChosen: G.secretChosen, secretType: G.secretType,
 });
 // Reload once so the page comes back cross-origin isolated. Returns false when that isn't possible
 // (already isolated, already tried this session, or no service worker in control).
@@ -1376,6 +1425,9 @@ function reloadForIsolation() {
   return true;
 }
 function boot(data) {
+  try { const v = localStorage.getItem('uc-secret-type'); if (SECRET_NAMES[v]) G.secretType = v; } catch (e) {}
+  if (hashSecretType()) G.secretType = hashSecretType();
+  setSecretType(G.secretType);
   let resume = null;
   try { resume = JSON.parse(sessionStorage.getItem('uc-resume') || 'null'); sessionStorage.removeItem('uc-resume'); } catch (e) {}
   const fromHash = hashPower();
@@ -1385,7 +1437,7 @@ function boot(data) {
   try { G.showLife = localStorage.getItem('uc-life') === '1'; } catch (e) {}
   try {
     if (data && data.s) {
-      Object.assign(G, data, { thinking: false, selected: -1, level: 0 }); G.next.level = 0;
+      Object.assign(G, data, { thinking: false, selected: -1, level: 0 }); G.next.level = 0; setSecretType(G.secretType || 'r');
       G.legal = currentLegal(G.s); render();
       if (!G.over && G.s.turn !== G.human) askEngine();
     } else newGame();

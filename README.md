@@ -1,7 +1,7 @@
 # Unfair Chess
 
 Play a top chess engine with a one-sided superpower: Sniper Bishops, Amazon Queen,
-Nightrider Knights, Leaping Rooks, Berserker Pawns, Game of Life Pawns, Trojan Horse or Secret Queen.
+Nightrider Knights, Leaping Rooks, Berserker Pawns, Game of Life Pawns, Trojan Horse or Secret Piece.
 
 Live: https://thanhpt-91.github.io/unfair-chess/
 
@@ -16,7 +16,10 @@ Each power has its own link. Refreshing the page starts a new game with that pow
 | Berserker Pawns | https://thanhpt-91.github.io/unfair-chess/#berserker |
 | Game of Life Pawns | https://thanhpt-91.github.io/unfair-chess/#life |
 | Trojan Horse | https://thanhpt-91.github.io/unfair-chess/#trojan |
-| Secret Queen | https://thanhpt-91.github.io/unfair-chess/#secret |
+| Secret Piece (rook) | https://thanhpt-91.github.io/unfair-chess/#secret-rook |
+| Secret Piece (queen) | https://thanhpt-91.github.io/unfair-chess/#secret-queen |
+| Secret Piece (bishop) | https://thanhpt-91.github.io/unfair-chess/#secret-bishop |
+| Secret Piece (knight) | https://thanhpt-91.github.io/unfair-chess/#secret-knight |
 
 It's a static site, so there's no build step and no server code.
 
@@ -35,9 +38,13 @@ These are single-threaded builds, so they run on GitHub Pages without special se
 
 Double-tap one of your knights to fill its 3×3 block with your pawns, so you can end up with up to 16 pawns. Stockfish 19 and Fairy-Stockfish refuse any position where a side has more than 8 pawns, so they are shown only your 8 most advanced pawns. The rest are hidden from it, the same way it can't see your power. It can still only play moves that are legal on the real board.
 
-## Secret Queen
+## Secret Piece
 
-Before your first move, tap one of your pawns. It looks like a pawn (with a small red crown only you see) and the engine is shown an ordinary pawn, but it moves like a queen. It is revealed, and becomes a real queen the engine can see, as soon as it makes a move a pawn couldn't make, or gives check along a queen line. A normal one-step diagonal pawn check keeps it secret. If it reaches the last rank it becomes a queen.
+Before your first move, a card in the middle of the board asks you to choose a queen, rook (default), bishop or knight, then tap one of your pawns. That pawn secretly moves like the chosen piece as well as a pawn. A small badge only you see marks it, and the engine is shown an ordinary pawn.
+
+It is revealed, becoming the real piece the engine can see, as soon as it makes a move a pawn couldn't make, or gives check as that piece (along a line, or with a knight jump). A normal one-step diagonal pawn check keeps it secret. If it reaches the last rank as a pawn, it promotes to a queen.
+
+Rough difficulty, from the extra material it gives you: queen is easy (about +8 pawns), rook is medium (+4), bishop and knight are hard (+2).
 
 ## Engines
 
