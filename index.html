@@ -571,7 +571,7 @@ const POWERS = [
   { id: 'life', name: 'Game of Life Pawns', icon: 'p', rule: 'After each of your moves, your pawns follow Conway\'s Life: 2–3 neighbours survive, an empty square with exactly 3 grows a new pawn.' },
   { id: 'trojan', name: 'Trojan Horse', icon: 'N', rule: 'Double-tap a knight: it opens and fills every free square of its 3×3 block with your pawns (up to 9). The knight is used up.' },
 ];
-const LEVELS = [{ name: 'Max', elo: null, ms: 3000 }];
+const LEVELS = [{ name: 'Max', elo: null, ms: 1200 }];  // think time per move
 const eloLabel = L => L.elo ? L.elo + ' Elo' : 'Full strength · ~3600';
 
 const G = {
