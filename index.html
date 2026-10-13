@@ -1068,7 +1068,7 @@ boardEl.addEventListener('pointercancel', endDrag);
 document.querySelector('.panel').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   const fresh = !G.log.length || G.over;
-  if (b.dataset.id) { G.next.ability = b.dataset.id; if (fresh) return newGame(); }
+  if (b.dataset.id) { G.next.ability = b.dataset.id; setPowerHash(b.dataset.id); if (fresh) return newGame(); }
   else if (b.dataset.c) { G.next.human = b.dataset.c; if (fresh) return newGame(); }
   else if (b.dataset.l) { G.next.level = +b.dataset.l; if (fresh) return newGame(); }
   else if (b.id === 'lifeToggle') {
@@ -1090,7 +1090,24 @@ document.querySelector('.panel').addEventListener('click', e => {
 });
 
 // ===== Boot =====
+// Each power has its own link (#sniper, #amazon, #nightrider, #leaping, #berserker, #life),
+// so refreshing the page starts a new game with the same power.
+function hashPower() {
+  const h = (location.hash || '').slice(1).toLowerCase();
+  return POWERS.some(p => p.id === h) ? h : null;
+}
+function setPowerHash(id) {
+  if (hashPower() === id) return;
+  try { history.replaceState(null, '', '#' + id); } catch (e) { try { location.hash = id; } catch (e2) {} }
+}
+window.addEventListener('hashchange', () => {
+  const id = hashPower();
+  if (!id || (id === G.ability && id === G.next.ability)) return;
+  G.next.ability = id; newGame();
+});
 function boot(data) {
+  const fromHash = hashPower();
+  if (fromHash) { G.ability = G.next.ability = fromHash; data = null; }
   try { const v = localStorage.getItem('uc-eval'); if (v !== null) G.showEval = v === '1'; } catch (e) {}
   try { G.showLife = localStorage.getItem('uc-life') === '1'; } catch (e) {}
   try {
@@ -1100,6 +1117,7 @@ function boot(data) {
       if (!G.over && G.s.turn !== G.human) askEngine();
     } else newGame();
   } catch (e) { newGame(); }
+  setPowerHash(G.next.ability);
   Engine.start();
 }
 window.claude?.hot?.snapshot?.(() => ({

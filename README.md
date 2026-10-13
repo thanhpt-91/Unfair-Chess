@@ -5,6 +5,17 @@ Nightrider Knights, Leaping Rooks, Berserker Pawns or Game of Life Pawns.
 
 Live: https://thanhpt-91.github.io/Unfair-Chess/
 
+Each power has its own link. Refreshing the page starts a new game with that power:
+
+| Power | Link |
+|---|---|
+| Sniper Bishops | https://thanhpt-91.github.io/Unfair-Chess/#sniper |
+| Amazon Queen | https://thanhpt-91.github.io/Unfair-Chess/#amazon |
+| Nightrider Knights | https://thanhpt-91.github.io/Unfair-Chess/#nightrider |
+| Leaping Rooks | https://thanhpt-91.github.io/Unfair-Chess/#leaping |
+| Berserker Pawns | https://thanhpt-91.github.io/Unfair-Chess/#berserker |
+| Game of Life Pawns | https://thanhpt-91.github.io/Unfair-Chess/#life |
+
 It's a static site, so there's no build step and no server code.
 
 ## Files
