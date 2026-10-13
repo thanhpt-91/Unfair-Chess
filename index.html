@@ -113,6 +113,13 @@ button { font: inherit; color: inherit; }
   linear-gradient(var(--accent), var(--accent)) center/70% 2px no-repeat; opacity: .9; }
 .mark.shot::before { content: ""; position: absolute; inset: 18%; border-radius: 50%; border: 2.5px solid var(--accent); }
 .mark.jump::after { content: "↷"; position: absolute; right: 6%; top: 2%; font-size: clamp(9px, 1.4vw, 13px); font-weight: 700; color: rgba(20,85,30,.85); }
+.preview { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+.pv { position: absolute; width: 12.5%; height: 12.5%; }
+.pv.born { background-size: 100% 100%; opacity: .5; outline: 2px dashed var(--good); outline-offset: -4px; border-radius: 4px; }
+.pv.died { background: rgba(200, 50, 43, .32); }
+.pv.died::before, .pv.died::after { content: ""; position: absolute; left: 22%; right: 22%; top: 50%; height: 3px; margin-top: -1.5px; background: var(--accent); border-radius: 2px; }
+.pv.died::before { transform: rotate(45deg); } .pv.died::after { transform: rotate(-45deg); }
+.display-col { display: grid; gap: 6px; }
 .sq.hover::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 4px rgba(255,255,255,.65); }
 
 .pieces { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
@@ -193,6 +200,7 @@ button { font: inherit; color: inherit; }
       <div class="board-wrap" id="board">
         <div class="squares" id="squares"></div>
         <div class="pieces" id="pieces"></div>
+        <div class="preview" id="preview" aria-hidden="true"></div>
         <svg class="fx" id="fx" viewBox="0 0 8 8" preserveAspectRatio="none" aria-hidden="true"></svg>
       </div>
     </div>
@@ -222,7 +230,10 @@ button { font: inherit; color: inherit; }
       </div>
       <div>
         <div class="label">Display</div>
-        <button class="switch" type="button" role="switch" id="evalToggle" aria-checked="true"><span class="knob"></span>Eval bar</button>
+        <div class="display-col">
+          <button class="switch" type="button" role="switch" id="evalToggle" aria-checked="true"><span class="knob"></span>Eval bar</button>
+          <button class="switch" type="button" role="switch" id="lifeToggle" aria-checked="false" title="Hover or drag to a square to see which pawns die and are born" hidden><span class="knob"></span>Life preview</button>
+        </div>
       </div>
     </div>
 
@@ -423,31 +434,30 @@ function makeMove(s, m) {
 const kingSq = (b, c) => b.indexOf(c === 'w' ? 'K' : 'k');
 function inCheck(s, c, oppAb) { return !!attackMap(s.b, other(c), oppAb)[kingSq(s.b, c)]; }
 
-// Game of Life Pawns: one generation over every pawn on the board (pieces are obstacles, not cells).
-// A pawn with 2 or 3 pawn neighbours survives; an empty square with exactly 3 gets a pawn of the
-// majority colour. No births on the back ranks, and no side may exceed 8 pawns or 16 pieces.
-function lifeStep(b) {
+// Game of Life Pawns: one generation over the mover's own pawns only. Enemy pawns and all other
+// pieces are obstacles (not cells, and no birth on them). A pawn with 2 or 3 friendly-pawn
+// neighbours survives; an empty square with exactly 3 gets a new friendly pawn. No births on the
+// back ranks, and the side may not exceed 8 pawns or 16 pieces (centre files are born first).
+function lifeStep(b, c) {
+  const P = c === 'w' ? 'P' : 'p';
   const nb = b.slice(), born = [], died = [];
   for (let i = 0; i < 64; i++) {
     const f = i & 7, r = i >> 3;
-    let w = 0, k = 0;
+    let n = 0;
     for (let df = -1; df <= 1; df++) for (let dr = -1; dr <= 1; dr++) {
       if ((!df && !dr) || !onB(f + df, r + dr)) continue;
-      const q = b[idx(f + df, r + dr)];
-      if (q === 'P') w++; else if (q === 'p') k++;
+      if (b[idx(f + df, r + dr)] === P) n++;
     }
-    const n = w + k, p = b[i];
-    if (p === 'P' || p === 'p') { if (n !== 2 && n !== 3) { nb[i] = null; died.push({ sq: i, p }); } }
-    else if (!p && n === 3 && r !== 0 && r !== 7) born.push({ sq: i, p: w > k ? 'P' : 'p' });
+    const p = b[i];
+    if (p === P) { if (n !== 2 && n !== 3) { nb[i] = null; died.push({ sq: i, p }); } }
+    else if (!p && n === 3 && r !== 0 && r !== 7) born.push({ sq: i, p: P });
   }
+  born.sort((a, b) => Math.abs((a.sq & 7) - 3.5) - Math.abs((b.sq & 7) - 3.5) || a.sq - b.sq);
+  const pawns = nb.filter(x => x === P).length;
+  const pieces = nb.filter(x => x && colorOf(x) === c).length;
+  let room = Math.min(8 - pawns, 16 - pieces);
   const kept = [];
-  born.sort((a, b) => Math.abs((a.sq & 7) - 3.5) - Math.abs((b.sq & 7) - 3.5) || a.sq - b.sq); // centre files first when capped
-  for (const c of ['P', 'p']) {
-    const pawns = nb.filter(x => x === c).length;
-    const pieces = nb.filter(x => x && colorOf(x) === colorOf(c)).length;
-    let room = Math.min(8 - pawns, 16 - pieces);
-    for (const x of born) if (x.p === c && room > 0) { nb[x.sq] = c; kept.push(x); room--; }
-  }
+  for (const x of born) if (room > 0) { nb[x.sq] = P; kept.push(x); room--; }
   return { b: nb, born: kept, died };
 }
 
@@ -455,7 +465,7 @@ function lifeStep(b) {
 function applyMove(s, m, ab) {
   const n = makeMove(s, m);
   if (ab !== 'life') return n;
-  const L = lifeStep(n.b);
+  const L = lifeStep(n.b, s.turn);
   n.b = L.b; n.life = { born: L.born, died: L.died };
   if (L.born.length || L.died.length) n.half = 0;
   if (n.ep >= 0 && (n.b[m.to] !== m.piece || n.b[n.ep])) n.ep = -1;
@@ -510,7 +520,7 @@ const POWERS = [
   { id: 'nightrider', name: 'Nightrider Knights', icon: 'N', rule: 'Knights keep jumping in the same direction until something blocks them.' },
   { id: 'leaping', name: 'Leaping Rooks', icon: 'R', rule: 'Rooks can hop over one piece in their path.' },
   { id: 'berserker', name: 'Berserker Pawns', icon: 'P', rule: 'Pawns can also capture straight ahead.' },
-  { id: 'life', name: 'Game of Life Pawns', icon: 'p', rule: 'After each of your moves, all pawns follow Conway\'s Life: 2–3 pawn neighbours survive, exactly 3 spawn a new one.' },
+  { id: 'life', name: 'Game of Life Pawns', icon: 'p', rule: 'After each of your moves, your pawns follow Conway\'s Life: 2–3 neighbours survive, an empty square with exactly 3 grows a new pawn.' },
 ];
 const LEVELS = [
   { name: '1400', elo: 1400, ms: 600 },
@@ -523,8 +533,8 @@ const LEVELS = [
 const eloLabel = L => L.elo ? L.elo + ' Elo' : 'Full strength · ~3600';
 
 const G = {
-  human: 'w', ability: 'sniper', level: 4,
-  next: { human: 'w', ability: 'sniper', level: 4 }, ev: null, showEval: true,
+  human: 'w', ability: 'sniper', level: 5,
+  next: { human: 'w', ability: 'sniper', level: 5 }, ev: null, showEval: true, showLife: false,
   s: null, hist: [], log: [], keys: {}, over: null, last: null,
   selected: -1, legal: [], thinking: false,
 };
@@ -723,6 +733,7 @@ function render(anim) {
 function targetsOf(from) { return G.legal.filter(m => m.from === from); }
 
 function renderBoard(anim) {
+  if (typeof clearLifePreview === 'function') clearLifePreview();
   const s = G.s;
   const checkSq = inCheck(s, s.turn, oppAbFor(s.turn)) ? kingSq(s.b, s.turn) : -1;
   const tg = G.selected >= 0 ? targetsOf(G.selected) : [];
@@ -891,6 +902,9 @@ function setEval(e) { G.ev = e; renderEval(); }
 function renderEval() {
   const row = $('boardRow'), bar = $('evalbar'), sw = $('evalToggle');
   sw.setAttribute('aria-checked', String(G.showEval));
+  const lt = $('lifeToggle');
+  lt.hidden = G.ability !== 'life' && G.next.ability !== 'life';
+  lt.setAttribute('aria-checked', String(G.showLife));
   bar.hidden = !G.showEval; row.classList.toggle('no-eval', !G.showEval);
   if (!G.showEval) return;
   const e = G.ev;
@@ -968,8 +982,29 @@ boardEl.addEventListener('pointerdown', e => {
     boardEl.setPointerCapture(e.pointerId);
   } else { G.selected = -1; renderBoard(); }
 });
+const previewEl = $('preview');
+let previewKey = '';
+function showLifePreview(from, to) {
+  const key = from + '-' + to;
+  if (key === previewKey) return;
+  previewKey = key; previewEl.innerHTML = '';
+  if (!G.showLife || G.ability !== 'life' || from < 0 || to < 0) return;
+  const m = G.legal.find(x => x.from === from && x.to === to && (!x.promo || x.promo === 'q'));
+  if (!m) return;
+  const L = applyMove(G.s, m, 'life').life;
+  if (!L) return;
+  let html = '';
+  for (const d of L.died) { const { x, y } = posOf(d.sq); html += `<div class="pv died" style="left:${x * 12.5}%;top:${y * 12.5}%"></div>`; }
+  for (const n of L.born) { const { x, y } = posOf(n.sq); html += `<div class="pv born" style="left:${x * 12.5}%;top:${y * 12.5}%;background-image:url('${PIECES[n.p]}')"></div>`; }
+  previewEl.innerHTML = html;
+}
+function clearLifePreview() { previewKey = ''; previewEl.innerHTML = ''; }
+boardEl.addEventListener('pointerleave', () => { if (!drag) clearLifePreview(); });
 boardEl.addEventListener('pointermove', e => {
-  if (!drag) return;
+  if (!drag) {
+    if (e.pointerType === 'mouse' && G.selected >= 0 && canAct()) showLifePreview(G.selected, sqFromPoint(e.clientX, e.clientY));
+    return;
+  }
   const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
   if (!drag.moved && Math.hypot(dx, dy) < 5) return;
   drag.moved = true;
@@ -979,6 +1014,7 @@ boardEl.addEventListener('pointermove', e => {
   if (over !== drag.over) {
     squaresEl.querySelector('.hover')?.classList.remove('hover');
     if (over >= 0 && targetsOf(drag.from).some(m => m.to === over)) squaresEl.querySelector(`[data-sq="${over}"]`)?.classList.add('hover');
+    showLifePreview(drag.from, over);
     drag.over = over;
   }
 });
@@ -1001,6 +1037,12 @@ document.querySelector('.panel').addEventListener('click', e => {
   if (b.dataset.id) { G.next.ability = b.dataset.id; if (fresh) return newGame(); }
   else if (b.dataset.c) { G.next.human = b.dataset.c; if (fresh) return newGame(); }
   else if (b.dataset.l) { G.next.level = +b.dataset.l; if (fresh) return newGame(); }
+  else if (b.id === 'lifeToggle') {
+    G.showLife = !G.showLife;
+    try { localStorage.setItem('uc-life', G.showLife ? '1' : '0'); } catch (err) {}
+    clearLifePreview();
+    return renderEval();
+  }
   else if (b.id === 'evalToggle') {
     G.showEval = !G.showEval;
     try { localStorage.setItem('uc-eval', G.showEval ? '1' : '0'); } catch (err) {}
@@ -1009,12 +1051,13 @@ document.querySelector('.panel').addEventListener('click', e => {
   else if (b.id === 'newBtn') return newGame();
   else if (b.id === 'undoBtn') return undo();
   else if (b.id === 'resignBtn') return resign();
-  renderControls();
+  renderControls(); renderEval();
 });
 
 // ===== Boot =====
 function boot(data) {
   try { const v = localStorage.getItem('uc-eval'); if (v !== null) G.showEval = v === '1'; } catch (e) {}
+  try { G.showLife = localStorage.getItem('uc-life') === '1'; } catch (e) {}
   try {
     if (data && data.s) {
       Object.assign(G, data, { thinking: false, selected: -1 });
