@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Play Stockfish 19, Stockfish 11, Fairy-Stockfish or Lozza with a superpower: sniper bishops, amazon queen, nightrider knights, leaping rooks, berserker pawns, Game of Life pawns or a Trojan Horse.">
+<meta name="description" content="Play Stockfish 19, Stockfish 11, Fairy-Stockfish or Lozza with a superpower: sniper bishops, amazon queen, nightrider knights, leaping rooks, berserker pawns, Game of Life pawns, a Trojan Horse or a Secret Queen.">
 <title>Unfair Chess</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -143,6 +143,11 @@ button { font: inherit; color: inherit; }
 .pc { position: absolute; width: 12.5%; height: 12.5%; background-size: 100% 100%; will-change: transform; }
 .pc.anim { transition: transform .18s cubic-bezier(.3,.7,.3,1); }
 .pc.drag { z-index: 10; filter: drop-shadow(0 6px 8px rgba(0,0,0,.35)); transition: none; }
+.pc.secret::after { content: ""; position: absolute; right: 4%; top: 2%; width: 34%; height: 26%;
+  background: var(--accent); border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,.35);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 18'%3E%3Cpath d='M2 16 0 3l6 5 6-8 6 8 6-5-2 13z'/%3E%3C/svg%3E") center/contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 18'%3E%3Cpath d='M2 16 0 3l6 5 6-8 6 8 6-5-2 13z'/%3E%3C/svg%3E") center/contain no-repeat; }
+.moves .reveal { color: var(--accent); font-size: 11px; margin-left: 4px; }
 .pc.ghost { animation: hit .55s ease-out forwards; }
 .pc.born { animation: born .5s .2s both cubic-bezier(.3,1.5,.5,1); }
 @keyframes born { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -274,7 +279,8 @@ button { font: inherit; color: inherit; }
 
 <script>
 const PIECES = {"P": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PHBhdGggZD0iTTIyLjUgOWMtMi4yMSAwLTQgMS43OS00IDQgMCAuODkuMjkgMS43MS43OCAyLjM4QzE3LjMzIDE2LjUgMTYgMTguNTkgMTYgMjFjMCAyLjAzLjk0IDMuODQgMi40MSA1LjAzLTMgMS4wNi03LjQxIDUuNTUtNy40MSAxMy40N2gyM2MwLTcuOTItNC40MS0xMi40MS03LjQxLTEzLjQ3IDEuNDctMS4xOSAyLjQxLTMgMi40MS01LjAzIDAtMi40MS0xLjMzLTQuNS0zLjI4LTUuNjIuNDktLjY3Ljc4LTEuNDkuNzgtMi4zOCAwLTIuMjEtMS43OS00LTQtNHoiIGZpbGw9IiNmZmYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==", "B": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxnIGZpbGw9IiNmZmYiIHN0cm9rZS1saW5lY2FwPSJidXR0Ij48cGF0aCBkPSJNOSAzNmMzLjM5LS45NyAxMC4xMS40MyAxMy41LTIgMy4zOSAyLjQzIDEwLjExIDEuMDMgMTMuNSAyIDAgMCAxLjY1LjU0IDMgMi0uNjguOTctMS42NS45OS0zIC41LTMuMzktLjk3LTEwLjExLjQ2LTEzLjUtMS0zLjM5IDEuNDYtMTAuMTEuMDMtMTMuNSAxLTEuMzU0LjQ5LTIuMzIzLjQ3LTMtLjUgMS4zNTQtMS45NCAzLTIgMy0yeiIvPjxwYXRoIGQ9Ik0xNSAzMmMyLjUgMi41IDEyLjUgMi41IDE1IDAgLjUtMS41IDAtMiAwLTIgMC0yLjUtMi41LTQtMi41LTQgNS41LTEuNSA2LTExLjUtNS0xNS41LTExIDQtMTAuNSAxNC01IDE1LjUgMCAwLTIuNSAxLjUtMi41IDQgMCAwLS41LjUgMCAyeiIvPjxwYXRoIGQ9Ik0yNSA4YTIuNSAyLjUgMCAxIDEtNSAwIDIuNSAyLjUgMCAxIDEgNSAweiIvPjwvZz48cGF0aCBkPSJNMTcuNSAyNmgxME0xNSAzMGgxNW0tNy41LTE0LjV2NU0yMCAxOGg1IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PC9nPjwvc3ZnPg==", "N": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMiAxMGMxMC41IDEgMTYuNSA4IDE2IDI5SDE1YzAtOSAxMC02LjUgOC0yMSIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0yNCAxOGMuMzggMi45MS01LjU1IDcuMzctOCA5LTMgMi0yLjgyIDQuMzQtNSA0LTEuMDQyLS45NCAxLjQxLTMuMDQgMC0zLTEgMCAuMTkgMS4yMy0xIDItMSAwLTQuMDAzIDEtNC00IDAtMiA2LTEyIDYtMTJzMS44OS0xLjkgMi0zLjVjLS43My0uOTk0LS41LTItLjUtMyAxLTEgMyAyLjUgMyAyLjVoMnMuNzgtMS45OTIgMi41LTNjMSAwIDEgMyAxIDMiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNOS41IDI1LjVhLjUuNSAwIDEgMS0xIDAgLjUuNSAwIDEgMSAxIDB6bTUuNDMzLTkuNzVhLjUgMS41IDMwIDEgMS0uODY2LS41LjUgMS41IDMwIDEgMSAuODY2LjV6IiBmaWxsPSIjMDAwIi8+PC9nPjwvc3ZnPg==", "R": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0iI2ZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik05IDM5aDI3di0zSDl2M3ptMy0zdi00aDIxdjRIMTJ6bS0xLTIyVjloNHYyaDVWOWg1djJoNVY5aDR2NSIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiLz48cGF0aCBkPSJNMzQgMTRsLTMgM0gxNGwtMy0zIi8+PHBhdGggZD0iTTMxIDE3djEyLjVIMTRWMTciIHN0cm9rZS1saW5lY2FwPSJidXR0IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PHBhdGggZD0iTTMxIDI5LjVsMS41IDIuNWgtMjBsMS41LTIuNSIvPjxwYXRoIGQ9Ik0xMSAxNGgyMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjwvZz48L3N2Zz4=", "Q": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0iI2ZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik04IDEyYTIgMiAwIDEgMS00IDAgMiAyIDAgMSAxIDQgMHptMTYuNS00LjVhMiAyIDAgMSAxLTQgMCAyIDIgMCAxIDEgNCAwek00MSAxMmEyIDIgMCAxIDEtNCAwIDIgMiAwIDEgMSA0IDB6TTE2IDguNWEyIDIgMCAxIDEtNCAwIDIgMiAwIDEgMSA0IDB6TTMzIDlhMiAyIDAgMSAxLTQgMCAyIDIgMCAxIDEgNCAweiIvPjxwYXRoIGQ9Ik05IDI2YzguNS0xLjUgMjEtMS41IDI3IDBsMi0xMi03IDExVjExbC01LjUgMTMuNS0zLTE1LTMgMTUtNS41LTE0VjI1TDcgMTRsMiAxMnoiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTkgMjZjMCAyIDEuNSAyIDIuNSA0IDEgMS41IDEgMSAuNSAzLjUtMS41IDEtMS41IDIuNS0xLjUgMi41LTEuNSAxLjUuNSAyLjUuNSAyLjUgNi41IDEgMTYuNSAxIDIzIDAgMCAwIDEuNS0xIDAtMi41IDAgMCAuNS0xLjUtMS0yLjUtLjUtMi41LS41LTIgLjUtMy41IDEtMiAyLjUtMiAyLjUtNC04LjUtMS41LTE4LjUtMS41LTI3IDB6IiBzdHJva2UtbGluZWNhcD0iYnV0dCIvPjxwYXRoIGQ9Ik0xMS41IDMwYzMuNS0xIDE4LjUtMSAyMiAwTTEyIDMzLjVjNi0xIDE1LTEgMjEgMCIgZmlsbD0ibm9uZSIvPjwvZz48L3N2Zz4=", "K": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMi41IDExLjYzVjZNMjAgOGg1IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PHBhdGggZD0iTTIyLjUgMjVzNC41LTcuNSAzLTEwLjVjMCAwLTEtMi41LTMtMi41cy0zIDIuNS0zIDIuNWMtMS41IDMgMyAxMC41IDMgMTAuNSIgZmlsbD0iI2ZmZiIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48cGF0aCBkPSJNMTEuNSAzN2M1LjUgMy41IDE1LjUgMy41IDIxIDB2LTdzOS00LjUgNi0xMC41Yy00LTYuNS0xMy41LTMuNS0xNiA0VjI3di0zLjVjLTMuNS03LjUtMTMtMTAuNS0xNi00LTMgNiA1IDEwIDUgMTBWMzd6IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTExLjUgMzBjNS41LTMgMTUuNS0zIDIxIDBtLTIxIDMuNWM1LjUtMyAxNS41LTMgMjEgMG0tMjEgMy41YzUuNS0zIDE1LjUtMyAyMSAwIi8+PC9nPjwvc3ZnPg==", "p": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PHBhdGggZD0iTTIyLjUgOWMtMi4yMSAwLTQgMS43OS00IDQgMCAuODkuMjkgMS43MS43OCAyLjM4QzE3LjMzIDE2LjUgMTYgMTguNTkgMTYgMjFjMCAyLjAzLjk0IDMuODQgMi40MSA1LjAzLTMgMS4wNi03LjQxIDUuNTUtNy40MSAxMy40N2gyM2MwLTcuOTItNC40MS0xMi40MS03LjQxLTEzLjQ3IDEuNDctMS4xOSAyLjQxLTMgMi40MS01LjAzIDAtMi40MS0xLjMzLTQuNS0zLjI4LTUuNjIuNDktLjY3Ljc4LTEuNDkuNzgtMi4zOCAwLTIuMjEtMS43OS00LTQtNHoiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==", "b": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxnIGZpbGw9IiMwMDAiIHN0cm9rZS1saW5lY2FwPSJidXR0Ij48cGF0aCBkPSJNOSAzNmMzLjM5LS45NyAxMC4xMS40MyAxMy41LTIgMy4zOSAyLjQzIDEwLjExIDEuMDMgMTMuNSAyIDAgMCAxLjY1LjU0IDMgMi0uNjguOTctMS42NS45OS0zIC41LTMuMzktLjk3LTEwLjExLjQ2LTEzLjUtMS0zLjM5IDEuNDYtMTAuMTEuMDMtMTMuNSAxLTEuMzU0LjQ5LTIuMzIzLjQ3LTMtLjUgMS4zNTQtMS45NCAzLTIgMy0yeiIvPjxwYXRoIGQ9Ik0xNSAzMmMyLjUgMi41IDEyLjUgMi41IDE1IDAgLjUtMS41IDAtMiAwLTIgMC0yLjUtMi41LTQtMi41LTQgNS41LTEuNSA2LTExLjUtNS0xNS41LTExIDQtMTAuNSAxNC01IDE1LjUgMCAwLTIuNSAxLjUtMi41IDQgMCAwLS41LjUgMCAyeiIvPjxwYXRoIGQ9Ik0yNSA4YTIuNSAyLjUgMCAxIDEtNSAwIDIuNSAyLjUgMCAxIDEgNSAweiIvPjwvZz48cGF0aCBkPSJNMTcuNSAyNmgxME0xNSAzMGgxNW0tNy41LTE0LjV2NU0yMCAxOGg1IiBzdHJva2U9IiNlY2VjZWMiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48L2c+PC9zdmc+", "n": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMiAxMGMxMC41IDEgMTYuNSA4IDE2IDI5SDE1YzAtOSAxMC02LjUgOC0yMSIgZmlsbD0iIzAwMCIvPjxwYXRoIGQ9Ik0yNCAxOGMuMzggMi45MS01LjU1IDcuMzctOCA5LTMgMi0yLjgyIDQuMzQtNSA0LTEuMDQyLS45NCAxLjQxLTMuMDQgMC0zLTEgMCAuMTkgMS4yMy0xIDItMSAwLTQuMDAzIDEtNC00IDAtMiA2LTEyIDYtMTJzMS44OS0xLjkgMi0zLjVjLS43My0uOTk0LS41LTItLjUtMyAxLTEgMyAyLjUgMyAyLjVoMnMuNzgtMS45OTIgMi41LTNjMSAwIDEgMyAxIDMiIGZpbGw9IiMwMDAiLz48cGF0aCBkPSJNOS41IDI1LjVhLjUuNSAwIDEgMS0xIDAgLjUuNSAwIDEgMSAxIDB6bTUuNDMzLTkuNzVhLjUgMS41IDMwIDEgMS0uODY2LS41LjUgMS41IDMwIDEgMSAuODY2LjV6IiBmaWxsPSIjZWNlY2VjIiBzdHJva2U9IiNlY2VjZWMiLz48cGF0aCBkPSJNMjQuNTUgMTAuNGwtLjQ1IDEuNDUuNS4xNWMzLjE1IDEgNS42NSAyLjQ5IDcuOSA2Ljc1UzM1Ljc1IDI5LjA2IDM1LjI1IDM5bC0uMDUuNWgyLjI1bC4wNS0uNWMuNS0xMC4wNi0uODgtMTYuODUtMy4yNS0yMS4zNC0yLjM3LTQuNDktNS43OS02LjY0LTkuMTktNy4xNmwtLjUxLS4xeiIgZmlsbD0iI2VjZWNlYyIgc3Ryb2tlPSJub25lIi8+PC9nPjwvc3ZnPg==", "r": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik05IDM5aDI3di0zSDl2M3ptMy41LTdsMS41LTIuNWgxN2wxLjUgMi41aC0yMHptLS41IDR2LTRoMjF2NEgxMnoiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTE0IDI5LjV2LTEzaDE3djEzSDE0eiIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48cGF0aCBkPSJNMTQgMTYuNUwxMSAxNGgyM2wtMyAyLjVIMTR6TTExIDE0VjloNHYyaDVWOWg1djJoNVY5aDR2NUgxMXoiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTEyIDM1LjVoMjFtLTIwLTRoMTltLTE4LTJoMTdtLTE3LTEzaDE3TTExIDE0aDIzIiBmaWxsPSJub25lIiBzdHJva2U9IiNlY2VjZWMiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjwvZz48L3N2Zz4=", "q": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxnIHN0cm9rZT0ibm9uZSI+PGNpcmNsZSBjeD0iNiIgY3k9IjEyIiByPSIyLjc1Ii8+PGNpcmNsZSBjeD0iMTQiIGN5PSI5IiByPSIyLjc1Ii8+PGNpcmNsZSBjeD0iMjIuNSIgY3k9IjgiIHI9IjIuNzUiLz48Y2lyY2xlIGN4PSIzMSIgY3k9IjkiIHI9IjIuNzUiLz48Y2lyY2xlIGN4PSIzOSIgY3k9IjEyIiByPSIyLjc1Ii8+PC9nPjxwYXRoIGQ9Ik05IDI2YzguNS0xLjUgMjEtMS41IDI3IDBsMi41LTEyLjVMMzEgMjVsLS4zLTE0LjEtNS4yIDEzLjYtMy0xNC41LTMgMTQuNS01LjItMTMuNkwxNCAyNSA2LjUgMTMuNSA5IDI2eiIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiLz48cGF0aCBkPSJNOSAyNmMwIDIgMS41IDIgMi41IDQgMSAxLjUgMSAxIC41IDMuNS0xLjUgMS0xLjUgMi41LTEuNSAyLjUtMS41IDEuNS41IDIuNS41IDIuNSA2LjUgMSAxNi41IDEgMjMgMCAwIDAgMS41LTEgMC0yLjUgMCAwIC41LTEuNS0xLTIuNS0uNS0yLjUtLjUtMiAuNS0zLjUgMS0yIDIuNS0yIDIuNS00LTguNS0xLjUtMTguNS0xLjUtMjcgMHoiIHN0cm9rZS1saW5lY2FwPSJidXR0Ii8+PHBhdGggZD0iTTExIDM4LjVhMzUgMzUgMSAwIDAgMjMgMCIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiLz48cGF0aCBkPSJNMTEgMjlhMzUgMzUgMSAwIDEgMjMgMG0tMjEuNSAyLjVoMjBtLTIxIDNhMzUgMzUgMSAwIDAgMjIgMG0tMjMgM2EzNSAzNSAxIDAgMCAyNCAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNlY2VjZWMiLz48L2c+PC9zdmc+", "k": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMi41IDExLjYzVjYiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48cGF0aCBkPSJNMjIuNSAyNXM0LjUtNy41IDMtMTAuNWMwIDAtMS0yLjUtMy0yLjVzLTMgMi41LTMgMi41Yy0xLjUgMyAzIDEwLjUgMyAxMC41IiBmaWxsPSIjMDAwIiBzdHJva2UtbGluZWNhcD0iYnV0dCIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjxwYXRoIGQ9Ik0xMS41IDM3YzUuNSAzLjUgMTUuNSAzLjUgMjEgMHYtN3M5LTQuNSA2LTEwLjVjLTQtNi41LTEzLjUtMy41LTE2IDRWMjd2LTMuNWMtMy41LTcuNS0xMy0xMC41LTE2LTQtMyA2IDUgMTAgNSAxMFYzN3oiIGZpbGw9IiMwMDAiLz48cGF0aCBkPSJNMjAgOGg1IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PHBhdGggZD0iTTMyIDI5LjVzOC41LTQgNi4wMy05LjY1QzM0LjE1IDE0IDI1IDE4IDIyLjUgMjQuNWwuMDEgMi4xLS4wMS0yLjFDMjAgMTggOS45MDYgMTQgNi45OTcgMTkuODVjLTIuNDk3IDUuNjUgNC44NTMgOSA0Ljg1MyA5IiBzdHJva2U9IiNlY2VjZWMiLz48cGF0aCBkPSJNMTEuNSAzMGM1LjUtMyAxNS41LTMgMjEgMG0tMjEgMy41YzUuNS0zIDE1LjUtMyAyMSAwbS0yMSAzLjVjNS41LTMgMTUuNS0zIDIxIDAiIHN0cm9rZT0iI2VjZWNlYyIvPjwvZz48L3N2Zz4="};
-const POWER_ICONS = {"sniper": "<g transform=\"translate(-5 6) scale(0.95)\" stroke-width=\"2.63\"><circle cx=\"24\" cy=\"9\" r=\"2.4\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M24 12.5c-5.5 5-8.3 9.5-8.3 13.7 0 3.9 3.4 6.3 8.3 6.3s8.3-2.4 8.3-6.3c0-4.2-2.8-8.7-8.3-13.7z\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M26.8 18.5l-4.4 5.5\"/><path d=\"M15.5 39h17\"/><path d=\"M19 32.5l-1 6.5M29 32.5l1 6.5\"/></g><path class=\"a\" d=\"M26 21l8-8\" stroke-width=\"2\" stroke-dasharray=\"2 2.6\"/><g class=\"a\" stroke=\"var(--accent)\"><circle cx=\"38\" cy=\"9\" r=\"5.5\" stroke-width=\"2.2\"/><path d=\"M38 1v4M38 13v4M30 9h4M42 9h4\" stroke-width=\"2.2\"/><circle cx=\"38\" cy=\"9\" r=\"1.5\" fill=\"var(--accent)\" stroke=\"none\"/></g>", "amazon": "<g transform=\"translate(3 12) scale(0.88)\" stroke-width=\"2.84\"><path d=\"M15 36l-3-18 7 7 5-12 5 12 7-7-3 18z\" fill=\"currentColor\" fill-opacity=\".14\"/><circle cx=\"12\" cy=\"16\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"24\" cy=\"11\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"36\" cy=\"16\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M13 41h22\"/><path d=\"M15.5 36.5l-1 4.5M32.5 36.5l1 4.5\"/></g><g style=\"color:var(--accent)\" opacity=\"1\"><g transform=\"translate(16.5 -2) scale(-0.5 0.5)\" stroke-width=\"5.00\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"currentColor\" fill-opacity=\".14\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"1.6\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M12 40h20\"/></g></g><g style=\"color:var(--accent)\" opacity=\"1\"><g transform=\"translate(31.5 -2) scale(0.5)\" stroke-width=\"5.00\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"currentColor\" fill-opacity=\".14\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"1.6\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M12 40h20\"/></g></g>", "nightrider": "<g transform=\"translate(-4 10) scale(0.82)\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"currentColor\" fill-opacity=\".14\" stroke-width=\"3\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"1.6463414634146343\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M12 40h20\" stroke-width=\"3\"/></g><g class=\"a\" opacity=\".85\"><g transform=\"translate(18 4) scale(0.5)\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"var(--accent)\" fill-opacity=\".14\" stroke-width=\"4.5\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"2.7\" fill=\"var(--accent)\" stroke=\"none\"/><path d=\"M12 40h20\" stroke-width=\"4.5\"/></g></g><g class=\"a\" opacity=\".45\"><g transform=\"translate(33 -2) scale(0.34)\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"var(--accent)\" fill-opacity=\".14\" stroke-width=\"6\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"3.9705882352941173\" fill=\"var(--accent)\" stroke=\"none\"/><path d=\"M12 40h20\" stroke-width=\"6\"/></g></g>", "leaping": "<path d=\"M5 41V25h3.5v4h3.5v-4h3.5v4H19v-4h3.5v16z\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M3 43.5h22\"/><circle cx=\"36\" cy=\"37\" r=\"3.2\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M32 43.5h8\"/><path class=\"a\" d=\"M14 19C17 6 37 4 43 20\" stroke-width=\"2.4\"/><path class=\"a\" d=\"M44.5 13.5l-1.5 6.5-6-2.5\" stroke-width=\"2.4\"/>", "berserker": "<g transform=\"translate(0 7) scale(0.88)\" stroke-width=\"2.84\"><circle cx=\"24\" cy=\"21\" r=\"5.5\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M16.5 40c0-6.5 2.3-10.8 5.5-12.4h4c3.2 1.6 5.5 5.9 5.5 12.4z\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M13.5 42.5h21\"/></g><path class=\"a\" d=\"M17 14l7-6 7 6\" stroke-width=\"2.6\"/><path class=\"a\" d=\"M17 21l7-6 7 6\" stroke-width=\"2.6\" opacity=\".55\"/>", "life": "<rect x=\"18\" y=\"5\" width=\"11\" height=\"11\" rx=\"2\" fill=\"currentColor\" fill-opacity=\".14\"/><rect x=\"31\" y=\"18\" width=\"11\" height=\"11\" rx=\"2\" fill=\"currentColor\" fill-opacity=\".14\"/><rect x=\"5\" y=\"31\" width=\"11\" height=\"11\" rx=\"2\" fill=\"currentColor\" fill-opacity=\".14\"/><rect x=\"18\" y=\"31\" width=\"11\" height=\"11\" rx=\"2\" fill=\"currentColor\" fill-opacity=\".14\"/><rect class=\"a\" x=\"31\" y=\"31\" width=\"11\" height=\"11\" rx=\"2\" fill=\"var(--accent)\" fill-opacity=\".18\"/><circle class=\"a\" cx=\"36.5\" cy=\"34.6\" r=\"1.7\" fill=\"var(--accent)\" stroke=\"none\"/><path class=\"a\" d=\"M33.6 40c0-2.4 1.2-3.6 2.9-3.6s2.9 1.2 2.9 3.6z\" fill=\"var(--accent)\" stroke=\"none\"/><rect x=\"5\" y=\"18\" width=\"11\" height=\"11\" rx=\"2\" stroke-dasharray=\"2 2.5\" stroke-width=\"1.5\" opacity=\".45\"/>", "trojan": "<g transform=\"translate(1 -3) scale(.95)\" stroke-width=\"2.63\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"currentColor\" fill-opacity=\".14\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"1.6\" fill=\"currentColor\" stroke=\"none\"/></g><path class=\"a\" d=\"M7 34.5h30v4.5H7z\" fill=\"var(--accent)\" fill-opacity=\".2\" stroke-width=\"2.4\"/><circle class=\"a\" cx=\"13\" cy=\"43\" r=\"3\" stroke-width=\"2.4\"/><circle class=\"a\" cx=\"31\" cy=\"43\" r=\"3\" stroke-width=\"2.4\"/><path class=\"a\" d=\"M38.5 22.5v8M38.5 22.5l3.5 3.5M38.5 22.5l-3.5 3.5\" stroke-width=\"2.2\"/>"};
+PIECES.S = PIECES.P; PIECES.s = PIECES.p;  // a secret queen looks like a pawn
+const POWER_ICONS = {"sniper": "<g transform=\"translate(-5 6) scale(0.95)\" stroke-width=\"2.63\"><circle cx=\"24\" cy=\"9\" r=\"2.4\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M24 12.5c-5.5 5-8.3 9.5-8.3 13.7 0 3.9 3.4 6.3 8.3 6.3s8.3-2.4 8.3-6.3c0-4.2-2.8-8.7-8.3-13.7z\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M26.8 18.5l-4.4 5.5\"/><path d=\"M15.5 39h17\"/><path d=\"M19 32.5l-1 6.5M29 32.5l1 6.5\"/></g><path class=\"a\" d=\"M26 21l8-8\" stroke-width=\"2\" stroke-dasharray=\"2 2.6\"/><g class=\"a\" stroke=\"var(--accent)\"><circle cx=\"38\" cy=\"9\" r=\"5.5\" stroke-width=\"2.2\"/><path d=\"M38 1v4M38 13v4M30 9h4M42 9h4\" stroke-width=\"2.2\"/><circle cx=\"38\" cy=\"9\" r=\"1.5\" fill=\"var(--accent)\" stroke=\"none\"/></g>", "amazon": "<g transform=\"translate(3 12) scale(0.88)\" stroke-width=\"2.84\"><path d=\"M15 36l-3-18 7 7 5-12 5 12 7-7-3 18z\" fill=\"currentColor\" fill-opacity=\".14\"/><circle cx=\"12\" cy=\"16\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"24\" cy=\"11\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"36\" cy=\"16\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M13 41h22\"/><path d=\"M15.5 36.5l-1 4.5M32.5 36.5l1 4.5\"/></g><g style=\"color:var(--accent)\" opacity=\"1\"><g transform=\"translate(16.5 -2) scale(-0.5 0.5)\" stroke-width=\"5.00\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"currentColor\" fill-opacity=\".14\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"1.6\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M12 40h20\"/></g></g><g style=\"color:var(--accent)\" opacity=\"1\"><g transform=\"translate(31.5 -2) scale(0.5)\" stroke-width=\"5.00\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"currentColor\" fill-opacity=\".14\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"1.6\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M12 40h20\"/></g></g>", "nightrider": "<g transform=\"translate(-4 10) scale(0.82)\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"currentColor\" fill-opacity=\".14\" stroke-width=\"3\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"1.6463414634146343\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M12 40h20\" stroke-width=\"3\"/></g><g class=\"a\" opacity=\".85\"><g transform=\"translate(18 4) scale(0.5)\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"var(--accent)\" fill-opacity=\".14\" stroke-width=\"4.5\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"2.7\" fill=\"var(--accent)\" stroke=\"none\"/><path d=\"M12 40h20\" stroke-width=\"4.5\"/></g></g><g class=\"a\" opacity=\".45\"><g transform=\"translate(33 -2) scale(0.34)\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"var(--accent)\" fill-opacity=\".14\" stroke-width=\"6\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"3.9705882352941173\" fill=\"var(--accent)\" stroke=\"none\"/><path d=\"M12 40h20\" stroke-width=\"6\"/></g></g>", "leaping": "<path d=\"M5 41V25h3.5v4h3.5v-4h3.5v4H19v-4h3.5v16z\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M3 43.5h22\"/><circle cx=\"36\" cy=\"37\" r=\"3.2\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M32 43.5h8\"/><path class=\"a\" d=\"M14 19C17 6 37 4 43 20\" stroke-width=\"2.4\"/><path class=\"a\" d=\"M44.5 13.5l-1.5 6.5-6-2.5\" stroke-width=\"2.4\"/>", "berserker": "<g transform=\"translate(0 7) scale(0.88)\" stroke-width=\"2.84\"><circle cx=\"24\" cy=\"21\" r=\"5.5\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M16.5 40c0-6.5 2.3-10.8 5.5-12.4h4c3.2 1.6 5.5 5.9 5.5 12.4z\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M13.5 42.5h21\"/></g><path class=\"a\" d=\"M17 14l7-6 7 6\" stroke-width=\"2.6\"/><path class=\"a\" d=\"M17 21l7-6 7 6\" stroke-width=\"2.6\" opacity=\".55\"/>", "life": "<rect x=\"18\" y=\"5\" width=\"11\" height=\"11\" rx=\"2\" fill=\"currentColor\" fill-opacity=\".14\"/><rect x=\"31\" y=\"18\" width=\"11\" height=\"11\" rx=\"2\" fill=\"currentColor\" fill-opacity=\".14\"/><rect x=\"5\" y=\"31\" width=\"11\" height=\"11\" rx=\"2\" fill=\"currentColor\" fill-opacity=\".14\"/><rect x=\"18\" y=\"31\" width=\"11\" height=\"11\" rx=\"2\" fill=\"currentColor\" fill-opacity=\".14\"/><rect class=\"a\" x=\"31\" y=\"31\" width=\"11\" height=\"11\" rx=\"2\" fill=\"var(--accent)\" fill-opacity=\".18\"/><circle class=\"a\" cx=\"36.5\" cy=\"34.6\" r=\"1.7\" fill=\"var(--accent)\" stroke=\"none\"/><path class=\"a\" d=\"M33.6 40c0-2.4 1.2-3.6 2.9-3.6s2.9 1.2 2.9 3.6z\" fill=\"var(--accent)\" stroke=\"none\"/><rect x=\"5\" y=\"18\" width=\"11\" height=\"11\" rx=\"2\" stroke-dasharray=\"2 2.5\" stroke-width=\"1.5\" opacity=\".45\"/>", "trojan": "<g transform=\"translate(1 -3) scale(.95)\" stroke-width=\"2.63\"><path d=\"M30 36H14c0-5 2-8 6-11-3 0-6 1-8 3l-2-3c2-5 6-9 10-11l1-4 3 3c6 1 9 7 9 14z\" fill=\"currentColor\" fill-opacity=\".14\"/><circle cx=\"20.5\" cy=\"18.5\" r=\"1.6\" fill=\"currentColor\" stroke=\"none\"/></g><path class=\"a\" d=\"M7 34.5h30v4.5H7z\" fill=\"var(--accent)\" fill-opacity=\".2\" stroke-width=\"2.4\"/><circle class=\"a\" cx=\"13\" cy=\"43\" r=\"3\" stroke-width=\"2.4\"/><circle class=\"a\" cx=\"31\" cy=\"43\" r=\"3\" stroke-width=\"2.4\"/><path class=\"a\" d=\"M38.5 22.5v8M38.5 22.5l3.5 3.5M38.5 22.5l-3.5 3.5\" stroke-width=\"2.2\"/>", "secret": "<g transform=\"translate(0 7) scale(.86)\" stroke-width=\"2.9\"><circle cx=\"24\" cy=\"21\" r=\"5.5\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M16.5 40c0-6.5 2.3-10.8 5.5-12.4h4c3.2 1.6 5.5 5.9 5.5 12.4z\" fill=\"currentColor\" fill-opacity=\".14\"/><path d=\"M13.5 42.5h21\"/></g><path class=\"a\" d=\"M15 15l-2-10 6 5 5-7 5 7 6-5-2 10z\" fill=\"var(--accent)\" fill-opacity=\".15\" stroke-width=\"2.2\" stroke-dasharray=\"3 2.2\"/>"};
 const powerIcon = id => `<svg class="picon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${POWER_ICONS[id]}</svg>`;
 // ===== Rules core: standard chess + one-sided abilities =====
 const FILES = 'abcdefgh';
@@ -326,6 +332,9 @@ function boardKey(s) {
   return out + ' ' + s.turn + ' ' + cas + ' ' + (s.ep >= 0 ? sqName(s.ep) : '-');
 }
 const toFEN = s => boardKey(s) + ' ' + s.half + ' ' + s.full;
+// What engines are shown: a secret queen is an ordinary pawn to them
+const plainBoard = b => b.map(p => p === 'S' ? 'P' : p === 's' ? 'p' : p);
+const plainFEN = s => toFEN(Object.assign({}, s, { b: plainBoard(s.b) }));
 
 // Squares attacked by color `by`, using ability `ab` (null = standard chess)
 function attackMap(b, by, ab) {
@@ -345,10 +354,11 @@ function attackMap(b, by, ab) {
       }
     };
     const step = dirs => { for (const [df, dr] of dirs) if (onB(f + df, r + dr)) m[idx(f + df, r + dr)] = 1; };
-    if (t === 'p') {
+    if (t === 'p' || t === 's') {
       const d = by === 'w' ? 1 : -1;
       step([[-1, d], [1, d]]);
       if (ab === 'berserker') step([[0, d]]);
+      if (t === 's') { ray(DIAG); ray(ORTH); }
     } else if (t === 'n') { ab === 'nightrider' ? ray(KN) : step(KN); }
     else if (t === 'b') ray(DIAG);
     else if (t === 'r') ray(ORTH, ab === 'leaping');
@@ -390,10 +400,10 @@ function pseudoMoves(s, c, ab, oppAb) {
         if (!q || colorOf(q) === enemy) add(j);
       }
     };
-    if (t === 'p') {
+    if (t === 'p' || t === 's') {
       const d = c === 'w' ? 1 : -1, start = c === 'w' ? 1 : 6, last = c === 'w' ? 7 : 0;
       const pushP = (to, extra) => {
-        if ((to >> 3) === last) for (const pr of 'qrbn') add(to, Object.assign({ promo: pr }, extra || {}));
+        if ((to >> 3) === last) for (const pr of (t === 's' ? 'q' : 'qrbn')) add(to, Object.assign({ promo: pr }, extra || {}));
         else add(to, extra);
       };
       if (onB(f, r + d)) {
@@ -409,6 +419,14 @@ function pseudoMoves(s, c, ab, oppAb) {
         const to = idx(f + df, r + d);
         if (b[to] && colorOf(b[to]) === enemy) pushP(to);
         else if (to === s.ep && !b[to]) ms.push({ from: i, to, piece: p, cap: c === 'w' ? 'p' : 'P', ep: true });
+      }
+      if (t === 's') {
+        // Secret Queen: also every queen move (pawn-style duplicates skipped; last rank = real queen)
+        const have = new Set(ms.filter(m => m.from === i).map(m => m.to));
+        const before = ms.length;
+        ray(DIAG); ray(ORTH);
+        const added = ms.splice(before).filter(m => !have.has(m.to));
+        for (const m of added) { if ((m.to >> 3) === last) m.promo = 'q'; m.secret = true; ms.push(m); }
       }
     } else if (t === 'n') {
       ab === 'nightrider' ? ray(KN) : step(KN);
@@ -473,7 +491,7 @@ function makeMove(s, m) {
   return {
     b, turn: other(c), castle,
     ep: m.double ? (m.from + m.to) / 2 : -1,
-    half: (typeOf(p) === 'p' || m.cap) ? 0 : s.half + 1,
+    half: (typeOf(p) === 'p' || typeOf(p) === 's' || m.cap) ? 0 : s.half + 1,
     full: c === 'b' ? s.full + 1 : s.full,
   };
 }
@@ -509,8 +527,29 @@ function lifeStep(b, c) {
 }
 
 // Apply a move, then the mover's after-move power (only Life has one)
+// Secret Queen reveal: after the mover's move, their secret queen becomes a real queen (visible to
+// the engine) if it just moved in a way a pawn can't, or if it now checks the enemy king along a
+// queen line. A one-step diagonal pawn check stays secret: that's a normal pawn check.
+function queenLineHits(b, from, target) {
+  const f = from & 7, r = from >> 3, tf = target & 7, tr = target >> 3;
+  const df = Math.sign(tf - f), dr = Math.sign(tr - r);
+  if (!(f === tf || r === tr || Math.abs(tf - f) === Math.abs(tr - r)) || from === target) return false;
+  let x = f + df, y = r + dr;
+  while (x !== tf || y !== tr) { if (b[idx(x, y)]) return false; x += df; y += dr; }
+  return true;
+}
+function revealSecret(n, m, mover) {
+  const S = mover === 'w' ? 'S' : 's', Q = mover === 'w' ? 'Q' : 'q';
+  const i = n.b.indexOf(S);
+  if (i < 0) return;
+  const k = kingSq(n.b, other(mover));
+  const pawnCheck = (k >> 3) - (i >> 3) === (mover === 'w' ? 1 : -1) && Math.abs((k & 7) - (i & 7)) === 1;
+  if ((m.secret && m.to === i) || (queenLineHits(n.b, i, k) && !pawnCheck)) { n.b[i] = Q; n.revealed = i; }
+}
+
 function applyMove(s, m, ab) {
   const n = makeMove(s, m);
+  if (ab === 'secret') { revealSecret(n, m, s.turn); return n; }
   if (ab !== 'life') return n;
   const L = lifeStep(n.b, s.turn);
   n.b = L.b; n.life = { born: L.born, died: L.died };
@@ -534,7 +573,8 @@ function notate(s, m, legal, after, afterLegal, oppAbAfter) {
   const t = typeOf(m.piece);
   if (m.unload) str = 'N' + sqName(m.from) + '⇒' + m.unload.length + 'P';
   else if (m.castle) str = m.castle === 'K' ? 'O-O' : 'O-O-O';
-  else if (t === 'p') {
+  else if (t === 's' && m.secret) str = '♕' + (m.cap ? 'x' : '') + sqName(m.to) + (m.promo ? '=Q' : '');
+  else if (t === 'p' || t === 's') {
     str = (m.cap ? FILES[m.from & 7] + 'x' : '') + sqName(m.to) + (m.promo ? '=' + m.promo.toUpperCase() : '');
     if (m.straight) str = FILES[m.from & 7] + 'x' + sqName(m.to) + (m.promo ? '=' + m.promo.toUpperCase() : '');
   } else {
@@ -557,7 +597,7 @@ function insufficient(b) {
   return false;
 }
 
-const VAL = { p: 100, n: 300, b: 320, r: 500, q: 900, k: 0 };
+const VAL = { p: 100, s: 900, n: 300, b: 320, r: 500, q: 900, k: 0 };
 
 </script>
 <script>
@@ -570,6 +610,7 @@ const POWERS = [
   { id: 'berserker', name: 'Berserker Pawns', icon: 'P', rule: 'Pawns can also capture straight ahead.' },
   { id: 'life', name: 'Game of Life Pawns', icon: 'p', rule: 'After each of your moves, your pawns follow Conway\'s Life: 2–3 neighbours survive, an empty square with exactly 3 grows a new pawn.' },
   { id: 'trojan', name: 'Trojan Horse', icon: 'N', rule: 'Double-tap a knight: it opens and fills every free square of its 3×3 block with your pawns (up to 9). The knight is used up.' },
+  { id: 'secret', name: 'Secret Queen', icon: 'P', rule: 'Pick one of your pawns at the start. It secretly moves like a queen, until it makes a move a pawn can\'t or gives check along a queen line. Then it is revealed as a real queen.' },
 ];
 const LEVELS = [{ name: 'Max', elo: null, ms: 1200 }];  // think time per move
 const eloLabel = L => L.elo ? L.elo + ' Elo' : 'Full strength · ~3600';
@@ -719,7 +760,7 @@ const Engine = {
     const multipv = kind === 'lozza' ? 8 : CAPTURE_POWERS.includes(G.ability) ? 4 : 1;
     this.w.postMessage('setoption name MultiPV value ' + multipv);
     if (kind === 'lite' || kind === 'full' || kind === 'sf11' || kind === 'fairy') this.w.postMessage('setoption name UCI_LimitStrength value false');
-    this.w.postMessage('position fen ' + (sees8PawnsOnly(kind === 'lite' || kind === 'full' ? 'sf19' : kind) ? engineFEN(r.s) : toFEN(r.s)));
+    this.w.postMessage('position fen ' + (sees8PawnsOnly(kind === 'lite' || kind === 'full' ? 'sf19' : kind) ? engineFEN(r.s) : plainFEN(r.s)));
     this.w.postMessage('go movetime ' + LEVELS[r.level].ms + sm);
   },
   // The engine went silent (e.g. a position it refuses): restart it and let the backup bot move.
@@ -750,11 +791,11 @@ const Engine = {
 // Stockfish can't see your power, so on its own it walks into shots and jumps it doesn't know exist.
 // It returns its top few moves; each is checked against the material your power could win right
 // after it (only captures that normal chess wouldn't allow), and the best score after that wins.
-const CAPTURE_POWERS = ['sniper', 'amazon', 'nightrider', 'leaping', 'berserker'];
+const CAPTURE_POWERS = ['sniper', 'amazon', 'nightrider', 'leaping', 'berserker', 'secret'];
 const findLegal = (legal, uci) => legal.find(m => uciOf(m) === uci) || legal.find(m => uciOf(m) + 'q' === uci);
 function powerThreat(s) {
   const key = m => m.from + '-' + m.to + (m.shot ? 's' : '');
-  const normal = new Set(legalMoves(s, null, null).map(key));
+  const normal = new Set(legalMoves(Object.assign({}, s, { b: plainBoard(s.b) }), null, null).map(key));
   let worst = 0;
   for (const m of legalMoves(s, G.ability, null)) {
     if (normal.has(key(m))) continue;
@@ -783,6 +824,7 @@ function pickSafest(r, best, pv) {
 // It is shown only your 8 most advanced pawns; the rest are hidden from it, like your power is.
 // Its moves are still limited to ones that are legal on the real board.
 function engineFEN(s) {
+  s = Object.assign({}, s, { b: plainBoard(s.b) });
   const P = G.human === 'w' ? 'P' : 'p', pawns = [];
   s.b.forEach((x, i) => { if (x === P) pawns.push(i); });
   if (pawns.length <= 8) return toFEN(s);
@@ -813,7 +855,7 @@ function newGame(keepSettings) {
   Engine.cancel();
   if (!keepSettings) Object.assign(G, { human: G.next.human, ability: G.next.ability, level: G.next.level });
   G.s = parseFEN(START_FEN); G.hist = []; G.log = []; G.keys = {}; G.over = null; G.last = null;
-  G.selected = -1; G.thinking = false; G.ev = null;
+  G.selected = -1; G.thinking = false; G.ev = null; G.secretChosen = false;
   G.keys[boardKey(G.s)] = 1;
   G.legal = currentLegal(G.s);
   render();
@@ -826,7 +868,7 @@ function play(m) {
   const afterLegal = currentLegal(after);
   const san = notate(before, m, legalBefore, after, afterLegal, oppAbFor(after.turn));
   G.hist.push({ s: before, last: G.last, keys: Object.assign({}, G.keys), ev: G.ev });
-  G.log.push({ san, shot: !!m.shot, color: before.turn, life: after.life && (after.life.born.length || after.life.died.length) ? [after.life.born.length, after.life.died.length] : null });
+  G.log.push({ revealed: after.revealed !== undefined, san, shot: !!m.shot, color: before.turn, life: after.life && (after.life.born.length || after.life.died.length) ? [after.life.born.length, after.life.died.length] : null });
   G.s = after; G.legal = afterLegal; G.last = m; G.selected = -1;
   const k = boardKey(after); G.keys[k] = (G.keys[k] || 0) + 1;
   if (!afterLegal.length) {
@@ -854,6 +896,7 @@ function undo() {
   let h;
   do { h = G.hist.pop(); G.log.pop(); } while (G.hist.length && h.s.turn !== G.human);
   if (h.s.turn !== G.human) { newGame(true); return; }
+  G.secretChosen = G.hist.length > 0 || h.s.b.includes(G.human === 'w' ? 'S' : 's');
   G.s = h.s; G.last = h.last; G.keys = h.keys; G.ev = h.ev || null; G.over = null; G.selected = -1;
   G.legal = currentLegal(G.s);
   render();
@@ -912,7 +955,7 @@ function renderBoard(anim) {
     const p = s.b[i]; if (!p) continue;
     const el = document.createElement('div');
     const { x, y } = posOf(i);
-    el.className = 'pc'; el.dataset.sq = i;
+    el.className = 'pc' + (typeOf(p) === 's' ? ' secret' : ''); el.dataset.sq = i;
     el.style.left = x * 12.5 + '%'; el.style.top = y * 12.5 + '%';
     el.style.backgroundImage = `url("${PIECES[p]}")`;
     piecesEl.appendChild(el);
@@ -939,6 +982,7 @@ function animate(m) {
     m.unload.forEach((j, k) => { const el = piecesEl.querySelector(`.pc[data-sq="${j}"]`); if (el) { el.classList.add('born'); el.style.animationDelay = (0.15 + k * 0.05) + 's'; } });
     return;
   }
+  if (G.s.revealed !== undefined) piecesEl.querySelector(`.pc[data-sq="${G.s.revealed}"]`)?.classList.add('born');
   const L = G.s.life;
   if (L) {
     for (const d of L.died) {
@@ -972,7 +1016,7 @@ function capturedBy(c) {
   // pieces of the opponent that are missing (promotion-aware enough for display)
   const start = { p: 8, n: 2, b: 2, r: 2, q: 1 };
   const opp = other(c), have = { p: 0, n: 0, b: 0, r: 0, q: 0 };
-  for (const p of G.s.b) if (p && colorOf(p) === opp && typeOf(p) !== 'k') have[typeOf(p)]++;
+  for (const p of G.s.b) if (p && colorOf(p) === opp && typeOf(p) !== 'k') have[typeOf(p) === 's' ? 'p' : typeOf(p)]++;
   const out = [];
   for (const t of 'qrbnp') for (let k = 0; k < Math.max(0, start[t] - have[t]); k++) out.push(opp === 'w' ? t.toUpperCase() : t);
   return out;
@@ -1002,9 +1046,11 @@ function renderStrips() {
 function renderStatus() {
   const el = $('status');
   if (G.over) { el.textContent = resultText().title; return; }
-  if (G.thinking) { el.innerHTML = '<span class="spin"></span>Stockfish is thinking…'; return; }
+  if (G.thinking) { el.innerHTML = '<span class="spin"></span>' + playingName() + ' is thinking…'; return; }
   const chk = inCheck(G.s, G.s.turn, oppAbFor(G.s.turn));
-  if (G.s.turn === G.human) el.textContent = chk ? 'You are in check. Your move.' : 'Your move.';
+  if (G.s.turn === G.human && G.ability === 'secret' && !G.secretChosen) { el.textContent = 'Tap one of your pawns to make it your secret queen.'; return; }
+  const secretOn = G.ability === 'secret' && G.s.b.includes(G.human === 'w' ? 'S' : 's');
+  if (G.s.turn === G.human) el.textContent = (chk ? 'You are in check. Your move.' : 'Your move.') + (secretOn ? ' Your secret queen is the pawn with the crown.' : '');
   else el.textContent = 'Stockfish to move.';
   $('topStrip') && renderStrips();
 }
@@ -1018,7 +1064,7 @@ function renderMoves() {
   if (startBlack) { html += `<span class="n">1.</span><span>…</span>`; }
   for (const e of G.log) {
     if (e.color === 'w') html += `<span class="n">${num}.</span>`;
-    html += `<span class="${e.shot ? 'shot' : ''}">${e.san}${e.life ? `<span class="life" title="Life: ${e.life[0]} born, ${e.life[1]} died">+${e.life[0]} −${e.life[1]}</span>` : ''}</span>`;
+    html += `<span class="${e.shot ? 'shot' : ''}">${e.san}${e.revealed ? '<span class="reveal">revealed</span>' : ''}${e.life ? `<span class="life" title="Life: ${e.life[0]} born, ${e.life[1]} died">+${e.life[0]} −${e.life[1]}</span>` : ''}</span>`;
     if (e.color === 'b') num++;
     i++;
   }
@@ -1141,6 +1187,14 @@ boardEl.addEventListener('pointerdown', e => {
   if (e.target.closest('.result, .promo')) return;
   const sq = sqFromPoint(e.clientX, e.clientY);
   if (sq < 0 || !canAct()) return;
+  if (G.ability === 'secret' && !G.secretChosen) {
+    if (G.s.b[sq] === (G.human === 'w' ? 'P' : 'p')) {
+      G.s = Object.assign({}, G.s, { b: G.s.b.slice() });
+      G.s.b[sq] = G.human === 'w' ? 'S' : 's';
+      G.secretChosen = true; G.legal = currentLegal(G.s); render();
+    }
+    return;
+  }
   // Double-tap = two taps that both select the same knight of yours (not a move onto that square)
   const now = performance.now(), tapKey = sq + ':' + G.log.length;
   if (G.ability === 'trojan' && lastTap.key === tapKey && now - lastTap.t < 450) {
@@ -1297,7 +1351,7 @@ if ('serviceWorker' in navigator && /github\.io$|^localhost$|^127\.0\.0\.1$/.tes
 }
 const snapshotState = () => ({
   human: G.human, ability: G.ability, level: G.level, next: G.next,
-  s: G.s, hist: G.hist, log: G.log, keys: G.keys, over: G.over, last: G.last, ev: G.ev,
+  s: G.s, hist: G.hist, log: G.log, keys: G.keys, over: G.over, last: G.last, ev: G.ev, secretChosen: G.secretChosen,
 });
 // Reload once so the page comes back cross-origin isolated. Returns false when that isn't possible
 // (already isolated, already tried this session, or no service worker in control).
