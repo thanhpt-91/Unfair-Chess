@@ -1,6 +1,6 @@
 # Unfair Chess
 
-Play Stockfish 19 with a one-sided superpower: Sniper Bishops, Amazon Queen,
+Play a top chess engine with a one-sided superpower: Sniper Bishops, Amazon Queen,
 Nightrider Knights, Leaping Rooks, Berserker Pawns, Game of Life Pawns or Trojan Horse.
 
 Live: https://thanhpt-91.github.io/unfair-chess/
@@ -27,17 +27,27 @@ It's a static site, so there's no build step and no server code.
 
 These are single-threaded builds, so they run on GitHub Pages without special server headers.
 
-- `sw.js`: a service worker. It keeps the engines in the browser's Cache Storage, so the 99 MB net downloads only once (the normal HTTP cache drops files that large). It also opens the page from cache straight away and checks GitHub in the background. When a newer version has been deployed, a "new version is ready" notice appears with a Reload button.
+- `engines/`: Stockfish 11 (`sf11/`), Fairy-Stockfish (`fairy/`) and Lozza (`lozza.js`).
+- `sw.js`: a service worker. It keeps the engines in the browser's Cache Storage, so the 99 MB net downloads only once (the normal HTTP cache drops files that large). It also opens the page from cache straight away and checks GitHub in the background. When a newer version has been deployed, a "new version is ready" notice appears with a Reload button. It also adds the cross-origin isolation headers Fairy-Stockfish needs, which GitHub Pages can't set.
 
 ## Trojan Horse and Stockfish
 
-Double-tap one of your knights to fill its 3×3 block with your pawns, so you can end up with up to 16 pawns. Stockfish refuses any position where a side has more than 8 pawns, so it is shown only your 8 most advanced pawns. The rest are hidden from it, the same way it can't see your power. It can still only play moves that are legal on the real board.
+Double-tap one of your knights to fill its 3×3 block with your pawns, so you can end up with up to 16 pawns. Stockfish 19 and Fairy-Stockfish refuse any position where a side has more than 8 pawns, so they are shown only your 8 most advanced pawns. The rest are hidden from it, the same way it can't see your power. It can still only play moves that are legal on the real board.
 
-## Strength
+## Engines
 
-You can pick 1400, 1800, 2200, 2600, 3000 or Max (default). An eval bar beside the board shows Stockfish's evaluation; switch it off under Display.
+Pick your opponent under **Opponent engine**. All four play at full strength, with 3 seconds per move:
 
-The numbered levels use Stockfish's own `UCI_Elo` limiter. Max plays at full strength: modern Stockfish is rated around 3600 on CCRL. A single browser thread with a 2.5 s think time plays below that, but still far above any human.
+| Engine | What it is |
+|---|---|
+| Stockfish 19 | Neural-network evaluation, around 3600 on rating lists. The strongest. |
+| Stockfish 11 | The last Stockfish before neural networks (2020), with a hand-tuned evaluation. |
+| Fairy-Stockfish | A Stockfish fork built for chess variants. It needs cross-origin isolation, which the service worker turns on, so it starts from the second visit. |
+| Lozza 11 | An independent engine written in JavaScript by a different author. |
+
+None of them know your power. Each lists its top few moves, and the game checks them: a move that hands you material through your power (a piece left on a sniper's line, for example) is passed over for the next-best safe one. Lozza can't be told which moves are legal under your power, so it lists its top 8 and the best legal one is played.
+
+An eval bar beside the board shows the engine's evaluation; switch it off under Display.
 
 ## Run locally
 
@@ -48,6 +58,8 @@ Browsers block Web Workers on `file://`, so serve the folder:
 Then open http://localhost:8000.
 
 ## Credits
+
+- Stockfish 11 (GPLv3) via stockfish.js; Fairy-Stockfish (GPLv3, see `engines/fairy/Copying.txt`); Lozza 11 by Colin Jenkins (MIT, see `engines/LICENSE-lozza.txt`)
 
 - Stockfish 19 (GPLv3, see `LICENSE-stockfish.txt`), WebAssembly builds from stockfish.js by Nathan Rugg
 - Pieces: cburnett set (GPLv2+), via lichess chessground
