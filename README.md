@@ -26,6 +26,8 @@ It's a static site, so there's no build step and no server code.
 
 These are single-threaded builds, so they run on GitHub Pages without special server headers.
 
+- `sw.js`: a service worker. It keeps the engines in the browser's Cache Storage, so the 99 MB net downloads only once (the normal HTTP cache drops files that large). It also opens the page from cache straight away and checks GitHub in the background. When a newer version has been deployed, a "new version is ready" notice appears with a Reload button.
+
 ## Strength
 
 You can pick 1400, 1800, 2200, 2600, 3000 or Max (default). An eval bar beside the board shows Stockfish's evaluation; switch it off under Display.
