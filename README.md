@@ -3,18 +3,18 @@
 Play Stockfish 19 with a one-sided superpower: Sniper Bishops, Amazon Queen,
 Nightrider Knights, Leaping Rooks, Berserker Pawns or Game of Life Pawns.
 
-Live: https://thanhpt-91.github.io/Unfair-Chess/
+Live: https://thanhpt-91.github.io/unfair-chess/
 
 Each power has its own link. Refreshing the page starts a new game with that power:
 
 | Power | Link |
 |---|---|
-| Sniper Bishops | https://thanhpt-91.github.io/Unfair-Chess/#sniper |
-| Amazon Queen | https://thanhpt-91.github.io/Unfair-Chess/#amazon |
-| Nightrider Knights | https://thanhpt-91.github.io/Unfair-Chess/#nightrider |
-| Leaping Rooks | https://thanhpt-91.github.io/Unfair-Chess/#leaping |
-| Berserker Pawns | https://thanhpt-91.github.io/Unfair-Chess/#berserker |
-| Game of Life Pawns | https://thanhpt-91.github.io/Unfair-Chess/#life |
+| Sniper Bishops | https://thanhpt-91.github.io/unfair-chess/#sniper |
+| Amazon Queen | https://thanhpt-91.github.io/unfair-chess/#amazon |
+| Nightrider Knights | https://thanhpt-91.github.io/unfair-chess/#nightrider |
+| Leaping Rooks | https://thanhpt-91.github.io/unfair-chess/#leaping |
+| Berserker Pawns | https://thanhpt-91.github.io/unfair-chess/#berserker |
+| Game of Life Pawns | https://thanhpt-91.github.io/unfair-chess/#life |
 
 It's a static site, so there's no build step and no server code.
 
