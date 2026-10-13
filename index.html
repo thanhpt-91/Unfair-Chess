@@ -116,10 +116,21 @@ button { font: inherit; color: inherit; }
 .mark.jump::after { content: "↷"; position: absolute; right: 6%; top: 2%; font-size: clamp(9px, 1.4vw, 13px); font-weight: 700; color: rgba(20,85,30,.85); }
 .preview { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
 .pv { position: absolute; width: 12.5%; height: 12.5%; }
-.pv.born { background-size: 100% 100%; opacity: .5; outline: 2px dashed var(--good); outline-offset: -4px; border-radius: 4px; }
-.pv.died { background: rgba(200, 50, 43, .32); }
-.pv.died::before, .pv.died::after { content: ""; position: absolute; left: 22%; right: 22%; top: 50%; height: 3px; margin-top: -1.5px; background: var(--accent); border-radius: 2px; }
+.pv.born { background-size: 88% 88%; background-position: center; background-repeat: no-repeat; opacity: .6;
+  box-shadow: inset 0 0 0 3px var(--good); background-color: rgba(47, 125, 74, .22); animation: pvPulse 1.4s ease-in-out infinite; }
+.pv.died { background: rgba(200, 50, 43, .42); box-shadow: inset 0 0 0 3px var(--accent); animation: pvPulse 1.4s ease-in-out infinite; }
+.pv.died::before, .pv.died::after { content: ""; position: absolute; left: 14%; right: 14%; top: 50%; height: 6px; margin-top: -3px; background: var(--accent); border-radius: 3px; box-shadow: 0 0 0 1.5px rgba(255,255,255,.75); }
 .pv.died::before { transform: rotate(45deg); } .pv.died::after { transform: rotate(-45deg); }
+.pv.maybe { animation: none; }
+.pv.born.maybe { opacity: .3; box-shadow: inset 0 0 0 2px var(--good); background-color: transparent; }
+.pv.died.maybe { background: rgba(200, 50, 43, .16); box-shadow: inset 0 0 0 2px rgba(200, 50, 43, .6); }
+.pv.died.maybe::before, .pv.died.maybe::after { opacity: .45; }
+@keyframes pvPulse { 50% { filter: brightness(1.25); } }
+.life-hint { font-size: 12.5px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; }
+.life-hint i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
+.life-hint .k-d { background: rgba(200, 50, 43, .42); box-shadow: inset 0 0 0 2px var(--accent); }
+.life-hint .k-b { background: rgba(47, 125, 74, .22); box-shadow: inset 0 0 0 2px var(--good); }
+@media (prefers-reduced-motion: reduce) { .pv { animation: none !important; } }
 .display-col { display: grid; gap: 6px; }
 .sq.hover::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 4px rgba(255,255,255,.65); }
 
@@ -245,6 +256,7 @@ button { font: inherit; color: inherit; }
     </div>
 
     <div class="status" id="status" aria-live="polite"></div>
+    <div class="life-hint" id="lifeHint" hidden></div>
     <div class="moves" id="moves"></div>
     <div class="engine-note" id="engineNote">Loading Stockfish…</div>
   </aside>
@@ -980,6 +992,7 @@ boardEl.addEventListener('pointerdown', e => {
   if (p && colorOf(p) === G.human) {
     const reselect = G.selected === sq;
     G.selected = sq; renderBoard();
+    showLifePreview(sq, -1);
     const el = piecesEl.querySelector(`.pc[data-sq="${sq}"]`);
     drag = { from: sq, el, x0: e.clientX, y0: e.clientY, moved: false, reselect, over: -1 };
     boardEl.setPointerCapture(e.pointerId);
@@ -988,21 +1001,35 @@ boardEl.addEventListener('pointerdown', e => {
 const previewEl = $('preview');
 let previewKey = '';
 function showLifePreview(from, to) {
-  const key = from + '-' + to;
+  const moves = from >= 0 ? G.legal.filter(x => x.from === from && (!x.promo || x.promo === 'q')) : [];
+  const exact = moves.find(x => x.to === to);
+  const key = from + '-' + (exact ? to : -1);
   if (key === previewKey) return;
   previewKey = key; previewEl.innerHTML = '';
-  if (!G.showLife || G.ability !== 'life' || from < 0 || to < 0) return;
-  const m = G.legal.find(x => x.from === from && x.to === to && (!x.promo || x.promo === 'q'));
-  if (!m) return;
-  const L = applyMove(G.s, m, 'life').life;
-  if (!L) return;
+  const hint = $('lifeHint');
+  if (!G.showLife || G.ability !== 'life' || !moves.length) { hint.hidden = true; return; }
+  // Exact result for the hovered square, otherwise a summary over every move this piece can make:
+  // solid marks happen whichever square you pick, faint ones only for some squares.
+  const set = exact ? [exact] : moves, n = set.length;
+  const died = new Map(), born = new Map();
+  for (const m of set) {
+    const L = applyMove(G.s, m, 'life').life;
+    if (!L) continue;
+    for (const d of L.died) died.set(d.sq, (died.get(d.sq) || 0) + 1);
+    for (const b of L.born) born.set(b.sq, (born.get(b.sq) || 0) + 1);
+  }
+  const P = G.human === 'w' ? 'P' : 'p';
   let html = '';
-  for (const d of L.died) { const { x, y } = posOf(d.sq); html += `<div class="pv died" style="left:${x * 12.5}%;top:${y * 12.5}%"></div>`; }
-  for (const n of L.born) { const { x, y } = posOf(n.sq); html += `<div class="pv born" style="left:${x * 12.5}%;top:${y * 12.5}%;background-image:url('${PIECES[n.p]}')"></div>`; }
+  for (const [sq, c] of died) { const { x, y } = posOf(sq); html += `<div class="pv died${c < n ? ' maybe' : ''}" style="left:${x * 12.5}%;top:${y * 12.5}%"></div>`; }
+  for (const [sq, c] of born) { const { x, y } = posOf(sq); html += `<div class="pv born${c < n ? ' maybe' : ''}" style="left:${x * 12.5}%;top:${y * 12.5}%;background-image:url('${PIECES[P]}')"></div>`; }
   previewEl.innerHTML = html;
+  const dAll = [...died.values()].filter(c => c === n).length, bAll = [...born.values()].filter(c => c === n).length;
+  hint.innerHTML = `<span><i class="k-d"></i>${dAll} will die</span><span><i class="k-b"></i>${bAll} will be born</span>` +
+    `<span>${exact ? 'Result of this move.' : 'Faint marks depend on where you move. Hover or drag to a square for the exact result.'}</span>`;
+  hint.hidden = false;
 }
-function clearLifePreview() { previewKey = ''; previewEl.innerHTML = ''; }
-boardEl.addEventListener('pointerleave', () => { if (!drag) clearLifePreview(); });
+function clearLifePreview() { previewKey = ''; previewEl.innerHTML = ''; const h = document.getElementById('lifeHint'); if (h) h.hidden = true; }
+boardEl.addEventListener('pointerleave', () => { if (!drag && G.selected >= 0) showLifePreview(G.selected, -1); });
 boardEl.addEventListener('pointermove', e => {
   if (!drag) {
     if (e.pointerType === 'mouse' && G.selected >= 0 && canAct()) showLifePreview(G.selected, sqFromPoint(e.clientX, e.clientY));
@@ -1044,6 +1071,7 @@ document.querySelector('.panel').addEventListener('click', e => {
     G.showLife = !G.showLife;
     try { localStorage.setItem('uc-life', G.showLife ? '1' : '0'); } catch (err) {}
     clearLifePreview();
+    if (G.showLife && G.selected >= 0) showLifePreview(G.selected, -1);
     return renderEval();
   }
   else if (b.id === 'evalToggle') {
