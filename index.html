@@ -595,10 +595,12 @@ const oppAbFor = c => c === G.human ? null : G.ability; // abilities that attack
 // Four engines to play and compare, all at full strength. Stockfish 19 starts on its small "lite"
 // net and switches to the full net (~99 MB, cached) between moves once it has downloaded.
 const ENGINE_LIST = [
-  { id: 'sf19', name: 'Stockfish 19', short: 'SF 19', blurb: 'Neural-network evaluation. The strongest.' },
-  { id: 'sf11', name: 'Stockfish 11', short: 'SF 11', blurb: 'Last Stockfish before neural networks (2020). Hand-tuned evaluation.' },
-  { id: 'fairy', name: 'Fairy-Stockfish', short: 'Fairy', blurb: 'Stockfish fork built for chess variants.' },
-  { id: 'lozza', name: 'Lozza 11', short: 'Lozza', blurb: 'Independent engine written in JavaScript by another author.' },
+  // Elo: CCRL single-CPU ratings (Stockfish 19 and 11: 40/15 list; Lozza: 9.0 on 40/40, 11 is unrated).
+  // Fairy-Stockfish isn't on CCRL; this build has no network file, so it runs the classical eval.
+  { id: 'sf19', name: 'Stockfish 19', short: 'SF 19', elo: '3629 Elo', blurb: 'Neural-network evaluation. The strongest.' },
+  { id: 'sf11', name: 'Stockfish 11', short: 'SF 11', elo: '3494 Elo', blurb: 'Last Stockfish before neural networks (2020). Hand-tuned evaluation.' },
+  { id: 'fairy', name: 'Fairy-Stockfish', short: 'Fairy', elo: '~3450 Elo (est.)', blurb: 'Stockfish fork built for chess variants. Not on rating lists; this build uses the classical evaluation.' },
+  { id: 'lozza', name: 'Lozza 11', short: 'Lozza', elo: '~3170 Elo', blurb: 'Independent engine written in JavaScript by another author. Rated 3167 for version 9.' },
 ];
 const ENGINE_FILES = {
   lite: 'stockfish-19-lite-single.js', full: 'stockfish-19-single.js',
@@ -975,10 +977,11 @@ function capturedBy(c) {
   for (const t of 'qrbnp') for (let k = 0; k < Math.max(0, start[t] - have[t]); k++) out.push(opp === 'w' ? t.toUpperCase() : t);
   return out;
 }
-function playingName() {
+function playingInfo() {
   const n = Engine.net;
-  return n === 'lite' || n === 'full' ? 'Stockfish 19' : engineInfo(n || Engine.id).name;
+  return engineInfo(n === 'lite' || n === 'full' ? 'sf19' : n || Engine.id);
 }
+const playingName = () => playingInfo().name;
 function stripHTML(c) {
   const isHuman = c === G.human;
   const mat = evalMat(G.s.b, c);
@@ -988,7 +991,7 @@ function stripHTML(c) {
   const left = isHuman
     ? `<div class="who"><span class="dot-live ${G.s.turn === c && !G.over ? 'on' : ''}"></span><span class="name">You</span>
        <span class="power-chip">${powerIcon(pw.id)}${pw.name}</span></div>`
-    : `<div class="who"><span class="dot-live ${thinking ? 'on' : ''}"></span><span class="name">${playingName()}</span><span class="elo max">${playingName() === 'Stockfish 19' ? 'Full strength · ~3600' : 'Full strength'}</span><span class="tag">${Engine.net === 'lite' ? 'lite net · ' : ''}normal rules</span></div>`;
+    : `<div class="who"><span class="dot-live ${thinking ? 'on' : ''}"></span><span class="name">${playingName()}</span><span class="elo max" title="CCRL rating list, single CPU">${playingInfo().elo}</span><span class="tag">${Engine.net === 'lite' ? 'lite net · ' : ''}normal rules</span></div>`;
   return left + `<div class="caps">${caps}${mat > 0 ? `<span class="diff">+${Math.round(mat / 100)}</span>` : ''}</div>`;
 }
 function renderStrips() {
@@ -1030,7 +1033,7 @@ function renderControls() {
   $('colorSeg').innerHTML = [['w', 'White'], ['b', 'Black']].map(([c, n]) =>
     `<button type="button" id="col-${c}" data-c="${c}" aria-pressed="${G.next.human === c}">${n}</button>`).join('');
   $('engineSeg').innerHTML = ENGINE_LIST.map(e =>
-    `<button type="button" id="eng-${e.id}" data-eng="${e.id}" aria-pressed="${Engine.id === e.id}" title="${e.name}: ${e.blurb}">${e.short}</button>`).join('');
+    `<button type="button" id="eng-${e.id}" data-eng="${e.id}" aria-pressed="${Engine.id === e.id}" title="${e.name} (${e.elo}): ${e.blurb}">${e.short}</button>`).join('');
   const pending = G.next.ability !== G.ability || G.next.human !== G.human || G.next.level !== G.level;
   $('powerNote').textContent = pending ? 'applies on New game' : '';
   $('undoBtn').disabled = !G.hist.length;
