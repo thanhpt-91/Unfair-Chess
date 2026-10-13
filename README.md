@@ -42,7 +42,7 @@ Pick your opponent under **Opponent engine**. All four play at full strength, wi
 |---|---|
 | Stockfish 19 | Neural-network evaluation, around 3600 on rating lists. The strongest. |
 | Stockfish 11 | The last Stockfish before neural networks (2020), with a hand-tuned evaluation. |
-| Fairy-Stockfish | A Stockfish fork built for chess variants. It needs cross-origin isolation, which the service worker turns on, so it starts from the second visit. |
+| Fairy-Stockfish | A Stockfish fork built for chess variants. It uses several threads, which needs cross-origin isolation. The service worker adds those headers, and on your first visit the page reloads itself once (keeping any game in progress) so they take effect. |
 | Lozza 11 | An independent engine written in JavaScript by a different author. |
 
 None of them know your power. Each lists its top few moves, and the game checks them: a move that hands you material through your power (a piece left on a sniper's line, for example) is passed over for the next-best safe one. Lozza can't be told which moves are legal under your power, so it lists its top 8 and the best legal one is played.
@@ -60,6 +60,5 @@ Then open http://localhost:8000.
 ## Credits
 
 - Stockfish 11 (GPLv3) via stockfish.js; Fairy-Stockfish (GPLv3, see `engines/fairy/Copying.txt`); Lozza 11 by Colin Jenkins (MIT, see `engines/LICENSE-lozza.txt`)
-
 - Stockfish 19 (GPLv3, see `LICENSE-stockfish.txt`), WebAssembly builds from stockfish.js by Nathan Rugg
 - Pieces: cburnett set (GPLv2+), via lichess chessground

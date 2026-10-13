@@ -682,9 +682,14 @@ const Engine = {
         if (gen !== this.gen) return w && w.terminate();
         if (w) this.attach(w, want);
         else if (want === 'fairy') {
-          // Not isolated yet (first visit, or a browser without support): use Stockfish 19 for now
-          this.note = self.crossOriginIsolated ? 'Fairy-Stockfish could not start here, so Stockfish 19 is playing instead.'
-            : 'Fairy-Stockfish needs one more reload of the page to start. Stockfish 19 is playing until then.';
+          // Not isolated yet: reload into isolation (the game is kept). If that can't happen
+          // (e.g. a browser without support), Stockfish 19 plays instead.
+          if (reloadForIsolation()) return;
+          let tried = false;
+          try { tried = !!sessionStorage.getItem('uc-iso-tried'); } catch (e) {}
+          this.note = !tried && 'serviceWorker' in navigator
+            ? 'Fairy-Stockfish is getting ready (the page reloads once by itself). Stockfish 19 plays until then.'
+            : 'Fairy-Stockfish can\'t run in this browser, so Stockfish 19 is playing instead.';
           const lite = await this.load('lite');
           if (gen !== this.gen) return lite && lite.terminate();
           if (lite) this.attach(lite, 'lite');
@@ -1279,14 +1284,36 @@ window.addEventListener('hashchange', () => {
 // from cache instantly. When a newer version has been deployed, offer a one-click reload.
 if ('serviceWorker' in navigator && /github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname)) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
+  // The isolation headers only apply to pages the service worker serves, which starts with the
+  // load after it installs. So once it takes control, reload straight away (saving any game).
+  navigator.serviceWorker.addEventListener('controllerchange', () => reloadForIsolation());
   navigator.serviceWorker.addEventListener('message', e => {
     if (e.data && e.data.type === 'uc-updated') $('updateToast').hidden = false;
   });
   $('updateBtn').addEventListener('click', () => location.reload());
 }
+const snapshotState = () => ({
+  human: G.human, ability: G.ability, level: G.level, next: G.next,
+  s: G.s, hist: G.hist, log: G.log, keys: G.keys, over: G.over, last: G.last, ev: G.ev,
+});
+// Reload once so the page comes back cross-origin isolated. Returns false when that isn't possible
+// (already isolated, already tried this session, or no service worker in control).
+function reloadForIsolation() {
+  if (self.crossOriginIsolated || !navigator.serviceWorker || !navigator.serviceWorker.controller) return false;
+  try {
+    if (sessionStorage.getItem('uc-iso-tried')) return false;
+    sessionStorage.setItem('uc-iso-tried', '1');
+    if (G.log.length && !G.over) sessionStorage.setItem('uc-resume', JSON.stringify(snapshotState()));
+  } catch (e) { return false; }
+  location.reload();
+  return true;
+}
 function boot(data) {
+  let resume = null;
+  try { resume = JSON.parse(sessionStorage.getItem('uc-resume') || 'null'); sessionStorage.removeItem('uc-resume'); } catch (e) {}
   const fromHash = hashPower();
-  if (fromHash) { G.ability = G.next.ability = fromHash; data = null; }
+  if (resume && resume.s) data = resume;
+  else if (fromHash) { G.ability = G.next.ability = fromHash; data = null; }
   try { const v = localStorage.getItem('uc-eval'); if (v !== null) G.showEval = v === '1'; } catch (e) {}
   try { G.showLife = localStorage.getItem('uc-life') === '1'; } catch (e) {}
   try {
@@ -1301,10 +1328,7 @@ function boot(data) {
   renderControls();
   Engine.start();
 }
-window.claude?.hot?.snapshot?.(() => ({
-  human: G.human, ability: G.ability, level: G.level, next: G.next,
-  s: G.s, hist: G.hist, log: G.log, keys: G.keys, over: G.over, last: G.last, ev: G.ev,
-}));
+window.claude?.hot?.snapshot?.(snapshotState);
 window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
 </script>
 </body>
