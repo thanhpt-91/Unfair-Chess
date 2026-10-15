@@ -1,7 +1,7 @@
 # Unfair Chess
 
 Play a top chess engine with a one-sided superpower: Sniper Bishops, Amazon Queen,
-Nightrider Knights, Leaping Rooks, Berserker Pawns, Game of Life Pawns, Trojan Horse or Secret Piece.
+Nightrider Knights, Leaping Rooks, Berserker Pawns, Game of Life Pawns, Trojan Horse or Secret Piece. Or no power at all against Shrinking Stockfish.
 
 Live: https://thanhpt-91.github.io/unfair-chess/
 
@@ -16,6 +16,7 @@ Each power has its own link. Refreshing the page starts a new game with that pow
 | Berserker Pawns | https://thanhpt-91.github.io/unfair-chess/#berserker |
 | Game of Life Pawns | https://thanhpt-91.github.io/unfair-chess/#life |
 | Trojan Horse | https://thanhpt-91.github.io/unfair-chess/#trojan |
+| Shrinking Stockfish | https://thanhpt-91.github.io/unfair-chess/#shrink |
 | Secret Piece (rook) | https://thanhpt-91.github.io/unfair-chess/#secret-rook |
 | Secret Piece (queen) | https://thanhpt-91.github.io/unfair-chess/#secret-queen |
 | Secret Piece (bishop) | https://thanhpt-91.github.io/unfair-chess/#secret-bishop |
@@ -45,6 +46,12 @@ Before your first move, a card in the middle of the board asks you to choose a q
 It is revealed, becoming the real piece the engine can see, as soon as it makes a move a pawn couldn't make, or gives check as that piece (along a line, or with a knight jump). A normal one-step diagonal pawn check keeps it secret. If it reaches the last rank as a pawn, it promotes to a queen.
 
 Rough difficulty, from the extra material it gives you: queen is easy (about +8 pawns), rook is medium (+4), bishop and knight are hard (+2).
+
+## Shrinking Stockfish
+
+No powers, just chess, always against Stockfish 19. It starts at full strength (shown as 3600) and loses 100 Elo every time you play its best move. While you think, full-strength Stockfish works out the best move for your position; your move counts if it matches, or is within 15 centipawns of it. After every move the status tells you either "Best move!" or what the best move was.
+
+Stockfish's own strength limiter only covers 1320 to 3190, so the game's 3600 to 1320 is spread over that range: every 100-Elo drop makes it a little weaker, starting with the first. Below 1320 it switches to its lowest skill level with a shallow search, down to a floor of 100.
 
 ## Engines
 
